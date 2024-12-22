@@ -1,0 +1,4 @@
+id;twins;crl1;crl2;crl;ga;ga_at;dob;height;weight;race;smoking;mother_pe;conception;chronic_hypertension;diabetes_type_i;diabetes_type_ii;diabetes_drugs;sle;aps;previous;previous_pe;previous_delivered_at;previous_ga_weeks;previous_ga_days;previous_interval;map;utpi;biophysical_at;include_plgf;include_pappa;plgf_mom;plgf;plgf_machine;pappa_mom;pappa;pappa_machine;biochemical_at
+1;no;;;50;11.5;21.12.2024;21.12.2000;167;50;1;no;no;1;no;no;no;no;no;no;no;;;;;;80;1.5;21.12.2024;raw;no;;40;Kryptor;;;;21.12.2024
+2;no;;;50;11.5;21.12.2024;21.12.2000;167;60;1;no;no;1;no;no;no;no;no;no;no;;;;;;80;1.5;21.12.2024;raw;no;;40;Kryptor;;;;21.12.2024
+3;no;;;50;11.5;21.12.2024;21.12.2000;167;70;1;no;no;1;no;no;no;no;no;no;no;;;;;;80;1.5;21.12.2024;raw;no;;40;Kryptor;;;;21.12.2024
