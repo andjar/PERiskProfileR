@@ -10,6 +10,8 @@ calculate_pe_risk <- function(data,
 
   method <- match.arg(method)
 
+  warning("Please Note: This package is NOT intended for clinical use!")
+
   if(!id_column %in% colnames(data)) {
     data$id <- seq(1, nrow(data))
   }
