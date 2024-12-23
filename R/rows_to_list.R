@@ -1,6 +1,23 @@
 #' Get Expected Column Names
-#' @description Returns the expected column names for PE risk form data
-#' @return Character vector of expected column names
+#'
+#' @description
+#' Returns a vector of expected column names for preeclampsia risk calculation data,
+#' including pregnancy details, maternal characteristics, medical history, and measurements.
+#'
+#' @return Character vector containing expected column names
+#'
+#' @details
+#' Column categories include:
+#' \itemize{
+#'   \item Pregnancy Details (twins, CRL measurements, gestational age)
+#'   \item Maternal Characteristics (demographics, height, weight)
+#'   \item Medical History (chronic conditions, diabetes)
+#'   \item Obstetric History (previous pregnancies)
+#'   \item Biophysical Measurements (MAP, UtPI)
+#'   \item Biochemical Measurements (PlGF, PAPP-A)
+#' }
+#'
+#' @export
 get_expected_columns <- function() {
   c(
     # Pregnancy Details
@@ -54,10 +71,22 @@ get_expected_columns <- function() {
   )
 }
 
-#' Validate DataFrame Columns
-#' @description Checks if the dataframe has the required columns for PE risk form
-#' @param df A dataframe containing preeclampsia risk data
-#' @return List with validation results
+#' Validate Data Frame Columns
+#'
+#' @description
+#' Checks if a data frame contains all required columns for preeclampsia risk calculation
+#'
+#' @param df Data frame to validate
+#'
+#' @return List containing:
+#'   \itemize{
+#'     \item valid: Boolean indicating if all required columns are present
+#'     \item missing_columns: Character vector of missing required columns
+#'     \item extra_columns: Character vector of additional columns not in expected set
+#'     \item message: Status message describing validation results
+#'   }
+#'
+#' @export
 validate_columns <- function(df) {
   expected_cols  <- get_expected_columns()
   actual_cols    <- colnames(df)
@@ -79,11 +108,61 @@ validate_columns <- function(df) {
   )
 }
 
-#' Convert data frame row to PE Risk Form Arguments
-#' @description Converts a row from a dataframe into a list of arguments for submit_pe_risk_form
-#' @param row A single row from a dataframe containing preeclampsia risk data
-#' @param validate Logical indicating whether to validate columns before conversion
-#' @return A list of arguments formatted for submit_pe_risk_form
+#' Convert Data Frame Row to Parameter List
+#'
+#' @description
+#' Converts a single row of patient data into a formatted list of parameters
+#' for preeclampsia risk calculation, performing necessary data transformations
+#' and validation.
+#'
+#' @param row Data frame row or vector containing patient data
+#' @param validate Boolean, whether to validate column names (default: TRUE)
+#'
+#' @return List of processed parameters with appropriate types and formats
+#'
+#' @details
+#' Performs the following transformations:
+#' \itemize{
+#'   \item Calculates maternal age at conception
+#'   \item Converts categorical variables from strings to numeric codes
+#'   \item Processes date fields
+#'   \item Validates categorical inputs against expected values
+#'   \item Handles special cases for diabetes medication and biomarker data
+#' }
+#'
+#' Input format expectations:
+#' \itemize{
+#'   \item Dates should be in format "dd-mm-yyyy" or "dd.mm.yyyy"
+#'   \item Categorical variables (yes/no) should be case-insensitive
+#'   \item Twins status: "no", "monochorionic", "dichorionic"
+#'   \item Race: 1=White, 2=Black, 3=South Asian, 4=East Asian, 5=Mixed
+#'   \item Biomarker inclusion: "no", "mom", "raw"
+#'   \item Biomarker machines: "delfia", "kryptor", "roche"
+#' }
+#'
+#' @section Warnings:
+#' The function issues warnings for:
+#' \itemize{
+#'   \item Missing required columns
+#'   \item Invalid categorical values
+#'   \item Unexpected values in medical history fields
+#'   \item Invalid biomarker specifications
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' patient_data <- data.frame(
+#'   twins = "no",
+#'   ga = 12,
+#'   height = 165,
+#'   weight = 70,
+#'   smoking = "no",
+#'   # ... other required fields ...
+#' )
+#' params <- row_to_list(patient_data)
+#' }
+#'
+#' @export
 row_to_list <- function(row, validate = TRUE) {
   if (validate) {
     # Convert row to one-row data frame if it's not already

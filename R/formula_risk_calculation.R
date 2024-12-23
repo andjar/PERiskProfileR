@@ -1,3 +1,26 @@
+#' Calculate Expected PlGF Values
+#'
+#' @description
+#' Calculates the expected Placental Growth Factor (PlGF) values based on various maternal
+#' characteristics and demographic factors. Implementation based on Appendix S1 from
+#' https://obgyn.onlinelibrary.wiley.com/doi/10.1002/uog.19112
+#'
+#' @param form_data A list containing the following elements:
+#'   \itemize{
+#'     \item plgf_machine: Integer (1=DELFIA, 2=KRYPTOR, 3=COBAS)
+#'     \item ga: Numeric, gestational age in weeks
+#'     \item weight: Numeric, maternal weight in kg
+#'     \item age: Numeric, maternal age in years
+#'     \item race: Integer (1=White, 2=Afro-Caribbean, 3=South Asian, 4=East Asian, 5=Mixed)
+#'     \item smoking: Boolean, smoking status
+#'     \item diabetes_type_i: Boolean, presence of Type 1 diabetes
+#'     \item diabetes_type_ii: Boolean, presence of Type 2 diabetes
+#'     \item conception: Integer (3=in vitro fertilization)
+#'     \item previous: Boolean, previous pregnancy status
+#'   }
+#'
+#' @return Numeric value representing the expected PlGF value
+#' @export
 get_expected_plgf <- function(form_data) {
   # Appendix S1 from
   # https://obgyn.onlinelibrary.wiley.com/doi/10.1002/uog.19112
@@ -53,6 +76,20 @@ get_expected_plgf <- function(form_data) {
   return(10^mom)
 }
 
+#' Calculate PlGF MoM
+#'
+#' @description
+#' Calculates the Multiple of Median (MoM) for Placental Growth Factor (PlGF)
+#'
+#' @param form_data A list containing:
+#'   \itemize{
+#'     \item include_plgf: Integer (0=exclude, 1=use provided MoM, 2=calculate MoM)
+#'     \item plgf_mom: Numeric, provided PlGF MoM if include_plgf=1
+#'     \item plgf: Numeric, raw PlGF value if include_plgf=2
+#'   }
+#'
+#' @return Numeric value representing PlGF MoM or NA if PlGF is excluded
+#' @export
 get_mom_plgf <- function(form_data) {
   if (form_data$include_plgf == 0) {
     mom_to_return <- NA
@@ -65,6 +102,25 @@ get_mom_plgf <- function(form_data) {
   return(mom_to_return)
 }
 
+#' Calculate Expected Uterine Artery Pulsatility Index
+#'
+#' @description
+#' Calculates the expected Uterine Artery Pulsatility Index (UtAPI) based on
+#' maternal characteristics
+#'
+#' @param form_data A list containing maternal characteristics including:
+#'   \itemize{
+#'     \item ga: Numeric, gestational age in weeks
+#'     \item weight: Numeric, maternal weight in kg
+#'     \item age: Numeric, maternal age in years
+#'     \item race: Integer (2=Afro-Caribbean, 4=East Asian, 5=Mixed)
+#'     \item diabetes_type_i: Boolean, presence of Type 1 diabetes
+#'     \item previous: Boolean, previous pregnancy status
+#'     \item previous_pe: Boolean, previous preeclampsia status
+#'   }
+#'
+#' @return Numeric value representing the expected UtAPI
+#' @export
 get_expected_utpi <- function(form_data) {
   intercept    <-  0.264570000
   beta_ga      <- -0.004838365
@@ -99,12 +155,48 @@ get_expected_utpi <- function(form_data) {
   return(10^mom)
 }
 
+#' Calculate UtAPI MoM
+#'
+#' @description
+#' Calculates the Multiple of Median (MoM) for Uterine Artery Pulsatility Index
+#'
+#' @param form_data A list containing:
+#'   \itemize{
+#'     \item utpi: Numeric, measured UtAPI value
+#'   }
+#'
+#' @return Numeric value representing UtAPI MoM
+#' @export
 get_mom_utpi <- function(form_data) {
   return(
     form_data$utpi / get_expected_utpi(form_data)
   )
 }
 
+#' Calculate Expected Mean Arterial Pressure
+#'
+#' @description
+#' Calculates the expected Mean Arterial Pressure (MAP) based on maternal
+#' characteristics and medical history
+#'
+#' @param form_data A list containing:
+#'   \itemize{
+#'     \item ga: Numeric, gestational age in weeks
+#'     \item weight: Numeric, maternal weight in kg
+#'     \item height: Numeric, maternal height in cm
+#'     \item race: Integer (2=Afro-Caribbean)
+#'     \item smoking: Boolean, smoking status
+#'     \item chronic_hypertension: Boolean, presence of chronic hypertension
+#'     \item diabetes_type_i: Boolean, presence of Type 1 diabetes
+#'     \item diabetes_type_ii: Boolean, presence of Type 2 diabetes
+#'     \item mother_pe: Boolean, maternal history of preeclampsia
+#'     \item previous: Boolean, previous pregnancy status
+#'     \item previous_pe: Boolean, previous preeclampsia status
+#'     \item previous_interval: Numeric, interval since previous pregnancy in years
+#'   }
+#'
+#' @return Numeric value representing the expected MAP
+#' @export
 get_expected_map <- function(form_data) {
 
   intercept    <-                      1.936400000
@@ -154,12 +246,35 @@ get_expected_map <- function(form_data) {
   return(10^mom)
 }
 
+#' Calculate MAP MoM
+#'
+#' @description
+#' Calculates the Multiple of Median (MoM) for Mean Arterial Pressure
+#'
+#' @param form_data A list containing:
+#'   \itemize{
+#'     \item map: Numeric, measured MAP value
+#'   }
+#'
+#' @return Numeric value representing MAP MoM
+#' @export
 get_mom_map <- function(form_data) {
   return(
     form_data$map / get_expected_map(form_data)
   )
 }
 
+#' Calculate Prior Risk
+#'
+#' @description
+#' Calculates the prior risk of preeclampsia based on maternal characteristics
+#'
+#' @param form_data A list containing maternal characteristics and medical history
+#' @param g Numeric, gestational age for risk calculation (default: 37)
+#' @param pnorm Boolean, whether to return probability from normal distribution (default: FALSE)
+#'
+#' @return Numeric value representing the prior risk
+#' @export
 get_prior <- function(form_data, g = 37, pnorm = FALSE){
 
   intercept <- 54.3637
@@ -225,6 +340,16 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
   return(r)
 }
 
+#' Calculate MAP-PI Joint Distribution
+#'
+#' @description
+#' Calculates the joint probability distribution for MAP and PI MoM values
+#'
+#' @param mom_MAP Numeric, MAP MoM value
+#' @param mom_PI Numeric, PI MoM value
+#' @param g Numeric vector, gestational ages
+#'
+#' @return Numeric vector of probability densities
 get_p_MAP_PI <- function(mom_MAP, mom_PI, g) {
 
   correlation_matrix <- matrix(c(1, -0.05133, -0.05133, 1), 2, 2)
@@ -247,6 +372,17 @@ get_p_MAP_PI <- function(mom_MAP, mom_PI, g) {
 
 }
 
+#' Calculate MAP-PI-PlGF Joint Distribution
+#'
+#' @description
+#' Calculates the joint probability distribution for MAP, PI, and PlGF MoM values
+#'
+#' @param mom_MAP Numeric, MAP MoM value
+#' @param mom_PI Numeric, PI MoM value
+#' @param mom_PlGF Numeric, PlGF MoM value
+#' @param g Numeric vector, gestational ages
+#'
+#' @return Numeric vector of probability densities
 get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
   # https://www.nejm.org/doi/suppl/10.1056/NEJMoa1704559/suppl_file/nejmoa1704559_appendix.pdf
 
@@ -277,6 +413,18 @@ get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
 
 }
 
+#' Calculate Prior Probability
+#'
+#' @description
+#' Calculates prior probability combining maternal characteristics and biomarker information
+#'
+#' @param g Numeric vector, gestational ages
+#' @param form_data List containing maternal characteristics
+#' @param mom_MAP Numeric, MAP MoM value (default: NA)
+#' @param mom_PI Numeric, PI MoM value (default: NA)
+#' @param mom_PlGF Numeric, PlGF MoM value (default: NA)
+#'
+#' @return Numeric vector of probability densities
 get_p_prior <- function(g, form_data, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) {
   if (is.na(mom_PlGF)) {
     get_p_MAP_PI(mom_MAP = mom_MAP, mom_PI = mom_PI, g = g) * get_prior(form_data, g = g)
@@ -285,6 +433,24 @@ get_p_prior <- function(g, form_data, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) 
   }
 }
 
+#' Calculate Formula-Based Risk
+#'
+#' @description
+#' Calculates the overall risk of preeclampsia using the FMF algorithm
+#'
+#' @param form_data List containing all required maternal characteristics and measurements
+#' @param G Numeric, gestational age cutoff for risk calculation (default: 37)
+#' @param report_as_text Boolean, whether to return risk as formatted text (default: FALSE)
+#'
+#' @return List containing:
+#'   \itemize{
+#'     \item mom_MAP: MAP MoM value
+#'     \item mom_PI: PI MoM value
+#'     \item mom_PlGF: PlGF MoM value
+#'     \item risk_prior: Prior risk value
+#'     \item risk: Final calculated risk
+#'   }
+#' @export
 calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE) {
   mom_MAP  <- get_mom_map(form_data)
   mom_PI   <- get_mom_utpi(form_data)

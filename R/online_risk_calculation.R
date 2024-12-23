@@ -1,4 +1,25 @@
-# Function to submit preeclampsia risk calculator form
+#' Calculate Online Preeclampsia Risk
+#'
+#' @description
+#' Submits maternal characteristics and measurements to the Fetal Medicine Foundation's
+#' online preeclampsia risk calculator and retrieves the results.
+#'
+#' @param form_data A list containing maternal characteristics and measurements
+#' @param save_responses Boolean, whether to save the HTML responses (default: FALSE)
+#' @param response_dir String, directory path to save responses (default: "requests")
+#' @param url String, FMF calculator URL (default: "https://fetalmedicine.org/research/assess/preeclampsia/First")
+#' @param row_id String or NULL, identifier for the response file (default: NULL)
+#'
+#' @return List containing:
+#'   \itemize{
+#'     \item status: "Success" or "Error"
+#'     \item content: HTML content if successful
+#'     \item code: HTTP status code if error
+#'     \item message: Error message if applicable
+#'   }
+#'
+#' @importFrom httr POST status_code content http_status
+#' @export
 calculate_online_risk <- function(
   form_data, # See rows_to_list.R
   save_responses = FALSE,
@@ -41,6 +62,18 @@ calculate_online_risk <- function(
   }
 }
 
+#' Map Form Data to Calculator Format
+#'
+#' @description
+#' Converts internal form data format to the format expected by the FMF calculator
+#'
+#' @param form_data List containing form data in internal format
+#'
+#' @return List with parameter names mapped to calculator format
+#'
+#' @details
+#' Prepends "CalculatorPeMom[" to each parameter name as required by the FMF calculator
+#'
 map_to_calculator_form <- function(form_data) {
 
   mapping <- get_expected_columns()
@@ -54,7 +87,24 @@ map_to_calculator_form <- function(form_data) {
   return(param_list)
 }
 
-# Function to extract risk scores from an HTML file
+#' Extract Risk Scores from HTML Content
+#'
+#' @description
+#' Extracts preeclampsia risk scores and biomarker MoM values from FMF calculator HTML response
+#'
+#' @param html_content String containing HTML response from calculator
+#' @param report_as_text Boolean, whether to return risks as text fractions (default: FALSE)
+#'
+#' @return List containing:
+#'   \itemize{
+#'     \item mom_MAP: Mean Arterial Pressure MoM
+#'     \item mom_PI: Pulsatility Index MoM
+#'     \item mom_PlGF: PlGF MoM
+#'     \item risk_prior: Prior risk (numeric or text)
+#'     \item risk: Final risk (numeric or text)
+#'   }
+#'
+#' @importFrom rvest read_html html_nodes html_text
 extract_risk_scores <- function(html_content, report_as_text = FALSE) {
 
   html_content <- rvest::read_html(html_content)
@@ -94,9 +144,6 @@ extract_risk_scores <- function(html_content, report_as_text = FALSE) {
     trimws()
   mom_PlGF <- as.numeric(sub(".*PLGF\\s*(\\d+\\.\\d+)\\s*MoM.*", "\\1", mom_PlGF_string))
 
-
-
-  # Return a list of extracted risks
   return(list(
     mom_MAP = mom_MAP,
     mom_PI = mom_PI,
@@ -106,10 +153,42 @@ extract_risk_scores <- function(html_content, report_as_text = FALSE) {
   ))
 }
 
+#' Extract Risk Scores from HTML File
+#'
+#' @description
+#' Reads an HTML file and extracts preeclampsia risk scores and biomarker MoM values
+#'
+#' @param html_file String, path to HTML file
+#' @param report_as_text Boolean, whether to return risks as text fractions (default: FALSE)
+#'
+#' @return List containing risk scores and MoM values (see extract_risk_scores)
+#'
+#' @seealso \code{\link{extract_risk_scores}}
+#' @export
 extract_risk_scores_from_file <- function(html_file, report_as_text = FALSE) {
   extract_risk_scores(html_file, report_as_text = report_as_text)
 }
 
+#' Extract Risk Scores from Multiple HTML Files
+#'
+#' @description
+#' Processes multiple HTML response files and combines the extracted risk scores into a data table
+#'
+#' @param response_dir String, directory containing HTML files (default: "requests")
+#' @param report_as_text Boolean, whether to return risks as text fractions (default: FALSE)
+#'
+#' @return data.table with columns:
+#'   \itemize{
+#'     \item file: Source file path
+#'     \item mom_MAP: Mean Arterial Pressure MoM
+#'     \item mom_PI: Pulsatility Index MoM
+#'     \item mom_PlGF: PlGF MoM
+#'     \item risk_prior: Prior risk
+#'     \item risk: Final risk
+#'   }
+#'
+#' @importFrom data.table rbindlist data.table
+#' @export
 extract_risk_scores_from_files <- function(response_dir = "requests", report_as_text = FALSE) {
   files_to_read <- list.files(path = response_dir, pattern = "*.html", full.names = TRUE)
   df <- rbindlist(lapply(files_to_read, function(file_to_read) {
