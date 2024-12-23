@@ -235,10 +235,11 @@ row_to_list <- function(row, validate = TRUE) {
     param_list[["previous_ga"]] <- previous_ga_weeks + previous_ga_days / 7
   }
 
-  # Calculate maternal age at conception
+  # Maternal age at estimated date of delivery (years)
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
   param_list$age <- as.numeric(
     difftime(
-      as.Date(param_list$ga_at, tryFormats = c("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d")) - param_list$ga*7,
+      as.Date(param_list$ga_at, tryFormats = c("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d")) + (40 - param_list$ga)*7,
       as.Date(param_list$dob, tryFormats = c("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d")),
       units = "days"
     )
@@ -341,6 +342,39 @@ row_to_list <- function(row, validate = TRUE) {
 
   # Remove NULL values and NA values
   param_list <- param_list[!sapply(param_list, is.null) & !sapply(param_list, is.na)]
+
+  # Truncations
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
+
+  if (param_list$age < 12 || param_list$age > 55) {
+    warning("Truncation of age (should be 12-55 years)")
+    param_list$age <- ifelse(param_list$age < 12, 12, param_list$age)
+    param_list$age <- ifelse(param_list$age > 55, 55, param_list$age)
+  }
+
+  if (param_list$weight < 34 || param_list$weight > 190) {
+    warning("Truncation of weight (should be 34-190 kg)")
+    param_list$weight <- ifelse(param_list$weight < 34, 34, param_list$weight)
+    param_list$weight <- ifelse(param_list$weight > 190, 190, param_list$weight)
+  }
+
+  if (param_list$height < 127 || param_list$height > 198) {
+    warning("Truncation of height (should be 127-198 cm)")
+    param_list$height <- ifelse(param_list$height < 127, 127, param_list$height)
+    param_list$height <- ifelse(param_list$height > 198, 198, param_list$height)
+  }
+
+  if (param_list$previous_ga < 24 || param_list$previous_ga > 42) {
+    warning("Truncation of previous_ga (should be 24-42 weeks)")
+    param_list$previous_ga <- ifelse(param_list$previous_ga < 24, 24, param_list$previous_ga)
+    param_list$previous_ga <- ifelse(param_list$previous_ga > 42, 42, param_list$previous_ga)
+  }
+
+  if (param_list$previous_interval < 0.25 || param_list$previous_interval > 15) {
+    warning("Truncation of previous_interval (should be 0.25-15 years)")
+    param_list$previous_interval <- ifelse(param_list$previous_interval < 0.25, 0.25, param_list$previous_interval)
+    param_list$previous_interval <- ifelse(param_list$previous_interval > 15, 15, param_list$previous_interval)
+  }
 
   return(param_list)
 }
