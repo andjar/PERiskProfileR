@@ -21,3 +21,4 @@ Numeric vector of probability densities
 \description{
 Calculates the joint probability distribution for MAP, PI, and PlGF MoM values
 }
+\keyword{internal}

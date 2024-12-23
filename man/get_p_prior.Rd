@@ -23,3 +23,4 @@ Numeric vector of probability densities
 \description{
 Calculates prior probability combining maternal characteristics and biomarker information
 }
+\keyword{internal}

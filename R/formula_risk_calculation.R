@@ -357,6 +357,7 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
 #' @param g Numeric vector, gestational ages
 #'
 #' @return Numeric vector of probability densities
+#' @keywords internal
 get_p_MAP_PI <- function(mom_MAP, mom_PI, g) {
 
   correlation_matrix <- matrix(c(1, -0.05133, -0.05133, 1), 2, 2)
@@ -390,6 +391,7 @@ get_p_MAP_PI <- function(mom_MAP, mom_PI, g) {
 #' @param g Numeric vector, gestational ages
 #'
 #' @return Numeric vector of probability densities
+#' @keywords internal
 get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
   # https://www.nejm.org/doi/suppl/10.1056/NEJMoa1704559/suppl_file/nejmoa1704559_appendix.pdf
 
@@ -432,6 +434,7 @@ get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
 #' @param mom_PlGF Numeric, PlGF MoM value (default: NA)
 #'
 #' @return Numeric vector of probability densities
+#' @keywords internal
 get_p_prior <- function(g, form_data, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) {
   if (is.na(mom_PlGF)) {
     get_p_MAP_PI(mom_MAP = mom_MAP, mom_PI = mom_PI, g = g) * get_prior(form_data, g = g)

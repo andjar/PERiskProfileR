@@ -24,3 +24,4 @@ List containing:
 \description{
 Extracts preeclampsia risk scores and biomarker MoM values from FMF calculator HTML response
 }
+\keyword{internal}

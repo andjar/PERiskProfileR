@@ -75,6 +75,7 @@ calculate_online_risk <- function(
 #' @details
 #' Prepends "CalculatorPeMom[" to each parameter name as required by the FMF calculator
 #'
+#' @keywords internal
 map_to_calculator_form <- function(form_data) {
 
   mapping <- get_expected_columns()
@@ -106,6 +107,7 @@ map_to_calculator_form <- function(form_data) {
 #'   }
 #'
 #' @importFrom rvest read_html html_nodes html_text
+#' @keywords internal
 extract_risk_scores <- function(html_content, report_as_text = FALSE) {
 
   html_content <- rvest::read_html(html_content)

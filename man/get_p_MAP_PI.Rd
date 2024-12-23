@@ -19,3 +19,4 @@ Numeric vector of probability densities
 \description{
 Calculates the joint probability distribution for MAP and PI MoM values
 }
+\keyword{internal}
