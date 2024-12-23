@@ -6,11 +6,14 @@
 #' @return A `data.table` object containing the contents of the demo dataset.
 #'
 #' @examples
+#' \dontrun{
 #' # Load the demo dataset
 #' demo_data <- get_demo_data()
 #' head(demo_data)
+#' }
 #'
 #' @importFrom data.table fread
+#' @keywords prepare
 #' @export
 get_demo_data <- function() {
   return(fread(system.file("extdata", "demo.csv", package = "PERiskProfileR")))

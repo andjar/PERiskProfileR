@@ -19,6 +19,7 @@
 #'   }
 #'
 #' @importFrom httr POST status_code content http_status
+#' @keywords online
 #' @export
 calculate_online_risk <- function(
   form_data, # See rows_to_list.R
@@ -164,6 +165,7 @@ extract_risk_scores <- function(html_content, report_as_text = FALSE) {
 #' @return List containing risk scores and MoM values (see extract_risk_scores)
 #'
 #' @seealso \code{\link{extract_risk_scores}}
+#' @keywords online
 #' @export
 extract_risk_scores_from_file <- function(html_file, report_as_text = FALSE) {
   extract_risk_scores(html_file, report_as_text = report_as_text)
@@ -188,6 +190,7 @@ extract_risk_scores_from_file <- function(html_file, report_as_text = FALSE) {
 #'   }
 #'
 #' @importFrom data.table rbindlist data.table
+#' @keywords online
 #' @export
 extract_risk_scores_from_files <- function(response_dir = "requests", report_as_text = FALSE) {
   files_to_read <- list.files(path = response_dir, pattern = "*.html", full.names = TRUE)

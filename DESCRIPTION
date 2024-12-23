@@ -3,8 +3,8 @@ Title: Calculate Preeclampsia Risk Scores in First Trimester
 Version: 0.0.0.9000
 Authors@R: 
     person("Anders Hagen", "Jarmund", , "anders.h.jarmund@ntnu.no", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+           comment = c(ORCID = "0000-0002-3923-1637"))
+Description: This package is based on the published Fetal Medicine Foundation (FMF) Risk Calculator for preeclampsia, based on first trimester parameters. Risk scores can be calculated either locally or by automatically submitting data to the web form.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
@@ -16,3 +16,7 @@ Imports:
     httr,
     jsonlite,
     rvest
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

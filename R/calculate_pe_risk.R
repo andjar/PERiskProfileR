@@ -57,6 +57,7 @@
 #' \code{\link{calculate_formula_risk}}, \code{\link{calculate_online_risk}}
 #'
 #' @importFrom data.table copy :=
+#' @keywords online local
 #' @export
 calculate_pe_risk <- function(data,
                               id_column = "id",

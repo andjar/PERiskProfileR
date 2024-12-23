@@ -1,0 +1,17 @@
+url: ~
+template:
+  bootstrap: 5
+  bootswatch: pulse
+reference:
+- title: Prepare data
+  desc:  Prepare data for risk calculation
+- contents:
+  - prepare
+- title: Local risk calculation
+  desc:  Get risk scores by local calculations
+- contents:
+  - local
+- title: Online risk calculation
+  desc:  Get risk scores from the online FMF calculator
+- contents:
+  - online

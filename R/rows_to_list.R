@@ -17,6 +17,7 @@
 #'   \item Biochemical Measurements (PlGF, PAPP-A)
 #' }
 #'
+#' @keywords prepare
 #' @export
 get_expected_columns <- function() {
   c(
@@ -162,6 +163,7 @@ validate_columns <- function(df) {
 #' params <- row_to_list(patient_data)
 #' }
 #'
+#' @keywords prepare
 #' @export
 row_to_list <- function(row, validate = TRUE) {
   if (validate) {

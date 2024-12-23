@@ -20,6 +20,7 @@
 #'   }
 #'
 #' @return Numeric value representing the expected PlGF value
+#' @keywords local
 #' @export
 get_expected_plgf <- function(form_data) {
   # Appendix S1 from
@@ -89,6 +90,7 @@ get_expected_plgf <- function(form_data) {
 #'   }
 #'
 #' @return Numeric value representing PlGF MoM or NA if PlGF is excluded
+#' @keywords local
 #' @export
 get_mom_plgf <- function(form_data) {
   if (form_data$include_plgf == 0) {
@@ -120,6 +122,7 @@ get_mom_plgf <- function(form_data) {
 #'   }
 #'
 #' @return Numeric value representing the expected UtAPI
+#' @keywords local
 #' @export
 get_expected_utpi <- function(form_data) {
   intercept    <-  0.264570000
@@ -166,6 +169,7 @@ get_expected_utpi <- function(form_data) {
 #'   }
 #'
 #' @return Numeric value representing UtAPI MoM
+#' @keywords local
 #' @export
 get_mom_utpi <- function(form_data) {
   return(
@@ -196,6 +200,7 @@ get_mom_utpi <- function(form_data) {
 #'   }
 #'
 #' @return Numeric value representing the expected MAP
+#' @keywords local
 #' @export
 get_expected_map <- function(form_data) {
 
@@ -257,6 +262,7 @@ get_expected_map <- function(form_data) {
 #'   }
 #'
 #' @return Numeric value representing MAP MoM
+#' @keywords local
 #' @export
 get_mom_map <- function(form_data) {
   return(
@@ -274,6 +280,7 @@ get_mom_map <- function(form_data) {
 #' @param pnorm Boolean, whether to return probability from normal distribution (default: FALSE)
 #'
 #' @return Numeric value representing the prior risk
+#' @keywords local
 #' @export
 get_prior <- function(form_data, g = 37, pnorm = FALSE){
 
