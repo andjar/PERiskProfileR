@@ -1,7 +1,10 @@
-url: ~
+url: https://andjar.github.io/PERiskProfileR/
 template:
   bootstrap: 5
-  bootswatch: pulse
+  bootswatch: lumen
+  light-switch: true
+
+
 reference:
 - title: Prepare data
   desc:  Prepare data for risk calculation

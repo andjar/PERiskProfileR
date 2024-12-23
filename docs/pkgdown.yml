@@ -3,4 +3,8 @@ pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   PERiskProfileR: PERiskProfileR.html
-last_built: 2024-12-23T12:47Z
+  data_specifications: data_specifications.html
+last_built: 2024-12-23T13:07Z
+urls:
+  reference: https://andjar.github.io/PERiskProfileR/reference
+  article: https://andjar.github.io/PERiskProfileR/articles

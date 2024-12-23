@@ -1,0 +1,161 @@
+---
+title: "Data Specifications"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Data Specifications}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Data Specification
+
+The package requires specific input data columns for risk calculation. A
+demo dataset is provided to demonstrate the expected format:
+
+```{r, eval = FALSE}
+# Load the demo data
+demo_data <- get_demo_data()
+head(demo_data)
+```
+
+Required columns include:
+
+-   Pregnancy details (twins, gestational age in weeks)
+
+-   Maternal characteristics (age, height, weight, race)
+
+-   Medical history (chronic conditions, diabetes)
+
+-   Biophysical measurements (MAP, UtPI)
+
+-   Biochemical measurements (PlGF, PAPP-A)
+
+### Allowed and Disallowed Strings
+
+Your data set must adhere to the following standards to be processed.
+While the `calculate_pe_risk()` function accepts a data frame, it
+converts each row to a data list using `row_to_list()`. The
+`row_to_list()` function processes and standardizes specific columns.
+Below are examples of allowed and disallowed values for key columns:
+
+#### Twins Status (twins)
+
+**Allowed:**
+
+-   "no" → Singleton pregnancy
+
+-   "monochorionic" → Twins (Monochorionic)
+
+-   "dichorionic" → Twins (Dichorionic)
+
+**Disallowed:**
+
+-   "singleton" (use "no" instead)
+
+-   "mono" (use "monochorionic" instead)
+
+-   "di" (use "dichorionic" instead)
+
+#### Smoking Status (smoking)
+
+**Allowed:**
+
+-   "yes" → Smoker
+
+-   "no" → Non-smoker
+
+**Disallowed:**
+
+-   "y", "n" (use "yes" or "no")
+
+-   "true", "false" (use "yes" or "no")
+
+#### Race (race)
+
+**Allowed (numeric codes):**
+
+-   1 → White
+
+-   2 → Black
+
+-   3 → South Asian
+
+-   4 → East Asian
+
+-   5 → Mixed
+
+**Disallowed:**
+
+-   "white", "black" (use numeric codes)
+
+#### Diabetes Drugs
+
+**Allowed:**
+
+-   "diet only"
+
+-   "insulin"
+
+-   "insulin+metformin"
+
+-   "metformin", "Metformin"
+
+**Disallowed:**
+
+-   "diet"
+
+-   "insulin + metformin" (spaces)
+
+#### Biomarker Inclusion (include_plgf, include_pappa)
+
+**Allowed:**
+
+-   "no" → Not included
+
+-   "mom", "MoM" → MoM (multiples of the median)
+
+-   "raw", "Raw" → Raw values
+
+**Disallowed:**
+
+-   "none" (use "no")
+
+-   "median", "raw data" (use "mom" or "raw")
+
+#### Biomarker Machines (plgf_machine, pappa_machine)
+
+**Allowed:**
+
+-   "delfia" → Delfia machine
+
+-   "kryptor" → Kryptor machine
+
+-   "roche" → Roche machine
+
+**Disallowed:**
+
+-   "kr" (use full names)
+
+### Validation and Conversion
+
+To verify and convert your dataset to the appropriate format:
+
+```{r, eval = FALSE}
+# Validate dataset columns
+validate_columns(demo_data)
+
+# Convert a data row to a parameter list
+data_row <- demo_data[1, ]
+params <- row_to_list(data_row)
+```
+
+The `row_to_list()` function automatically handles allowed strings and
+issues warnings if invalid values are detected. This ensures that data
+passed to the FMF preeclampsia calculator adheres to required standards.

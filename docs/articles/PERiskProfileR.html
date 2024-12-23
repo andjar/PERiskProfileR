@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>PERiskProfileR • PERiskProfileR</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
@@ -16,7 +16,7 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">PERiskProfileR</a>
 
@@ -31,11 +31,25 @@
       <ul class="navbar-nav me-auto">
 <li class="active nav-item"><a class="nav-link" href="../articles/PERiskProfileR.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/data_specifications.html">Data Specifications</a></li>
+  </ul>
+</li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
@@ -77,149 +91,29 @@ FMF calculator.</p>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"andjar/PERiskProfileR"</span>, ref <span class="op">=</span> <span class="st">"main"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="data-specification">Data Specification<a class="anchor" aria-label="anchor" href="#data-specification"></a>
+<h2 id="demo-data">Demo data<a class="anchor" aria-label="anchor" href="#demo-data"></a>
 </h2>
-<p>The package requires specific input data columns for risk
-calculation. A demo dataset is provided to demonstrate the expected
-format:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Load the demo data</span></span>
-<span><span class="va">demo_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_demo_data.html">get_demo_data</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">demo_data</span><span class="op">)</span></span></code></pre></div>
-<p>Required columns include:</p>
-<ul>
-<li><p>Pregnancy details (twins, gestational age in weeks)</p></li>
-<li><p>Maternal characteristics (age, height, weight, race)</p></li>
-<li><p>Medical history (chronic conditions, diabetes)</p></li>
-<li><p>Biophysical measurements (MAP, UtPI)</p></li>
-<li><p>Biochemical measurements (PlGF, PAPP-A)</p></li>
-</ul>
-<div class="section level3">
-<h3 id="allowed-and-disallowed-strings">Allowed and Disallowed Strings<a class="anchor" aria-label="anchor" href="#allowed-and-disallowed-strings"></a>
-</h3>
 <p>Your data set must adhere to the following standards to be processed.
-While the <code><a href="../reference/calculate_pe_risk.html">calculate_pe_risk()</a></code> function accepts a data
-frame, it converts each row to a data list using
-<code><a href="../reference/row_to_list.html">row_to_list()</a></code>. The <code><a href="../reference/row_to_list.html">row_to_list()</a></code> function
-processes and standardizes specific columns. Below are examples of
-allowed and disallowed values for key columns:</p>
-<div class="section level4">
-<h4 id="twins-status-twins">Twins Status (twins)<a class="anchor" aria-label="anchor" href="#twins-status-twins"></a>
-</h4>
-<p><strong>Allowed:</strong></p>
-<ul>
-<li><p>“no” → Singleton pregnancy</p></li>
-<li><p>“monochorionic” → Twins (Monochorionic)</p></li>
-<li><p>“dichorionic” → Twins (Dichorionic)</p></li>
-</ul>
-<p><strong>Disallowed:</strong></p>
-<ul>
-<li><p>“singleton” (use “no” instead)</p></li>
-<li><p>“mono” (use “monochorionic” instead)</p></li>
-<li><p>“di” (use “dichorionic” instead)</p></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="smoking-status-smoking">Smoking Status (smoking)<a class="anchor" aria-label="anchor" href="#smoking-status-smoking"></a>
-</h4>
-<p><strong>Allowed:</strong></p>
-<ul>
-<li><p>“yes” → Smoker</p></li>
-<li><p>“no” → Non-smoker</p></li>
-</ul>
-<p><strong>Disallowed:</strong></p>
-<ul>
-<li><p>“y”, “n” (use “yes” or “no”)</p></li>
-<li><p>“true”, “false” (use “yes” or “no”)</p></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="race-race">Race (race)<a class="anchor" aria-label="anchor" href="#race-race"></a>
-</h4>
-<p><strong>Allowed (numeric codes):</strong></p>
-<ul>
-<li><p>1 → White</p></li>
-<li><p>2 → Black</p></li>
-<li><p>3 → South Asian</p></li>
-<li><p>4 → East Asian</p></li>
-<li><p>5 → Mixed</p></li>
-</ul>
-<p><strong>Disallowed:</strong></p>
-<ul>
-<li>“white”, “black” (use numeric codes)</li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="diabetes-drugs">Diabetes Drugs<a class="anchor" aria-label="anchor" href="#diabetes-drugs"></a>
-</h4>
-<p><strong>Allowed:</strong></p>
-<ul>
-<li><p>“diet only”</p></li>
-<li><p>“insulin”</p></li>
-<li><p>“insulin+metformin”</p></li>
-<li><p>“metformin”, “Metformin”</p></li>
-</ul>
-<p><strong>Disallowed:</strong></p>
-<ul>
-<li><p>“diet”</p></li>
-<li><p>“insulin + metformin” (spaces)</p></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="biomarker-inclusion-include_plgf-include_pappa">Biomarker Inclusion (include_plgf, include_pappa)<a class="anchor" aria-label="anchor" href="#biomarker-inclusion-include_plgf-include_pappa"></a>
-</h4>
-<p><strong>Allowed:</strong></p>
-<ul>
-<li><p>“no” → Not included</p></li>
-<li><p>“mom”, “MoM” → MoM (multiples of the median)</p></li>
-<li><p>“raw”, “Raw” → Raw values</p></li>
-</ul>
-<p><strong>Disallowed:</strong></p>
-<ul>
-<li><p>“none” (use “no”)</p></li>
-<li><p>“median”, “raw data” (use “mom” or “raw”)</p></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="biomarker-machines-plgf_machine-pappa_machine">Biomarker Machines (plgf_machine, pappa_machine)<a class="anchor" aria-label="anchor" href="#biomarker-machines-plgf_machine-pappa_machine"></a>
-</h4>
-<p><strong>Allowed:</strong></p>
-<ul>
-<li><p>“delfia” → Delfia machine</p></li>
-<li><p>“kryptor” → Kryptor machine</p></li>
-<li><p>“roche” → Roche machine</p></li>
-</ul>
-<p><strong>Disallowed:</strong></p>
-<ul>
-<li>“kr” (use full names)</li>
-</ul>
-</div>
-</div>
-<div class="section level3">
-<h3 id="validation-and-conversion">Validation and Conversion<a class="anchor" aria-label="anchor" href="#validation-and-conversion"></a>
-</h3>
-<p>To verify and convert your dataset to the appropriate format:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Validate dataset columns</span></span>
-<span><span class="fu"><a href="../reference/validate_columns.html">validate_columns</a></span><span class="op">(</span><span class="va">demo_data</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Convert a data row to a parameter list</span></span>
-<span><span class="va">data_row</span> <span class="op">&lt;-</span> <span class="va">demo_data</span><span class="op">[</span><span class="fl">1</span>, <span class="op">]</span></span>
-<span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/row_to_list.html">row_to_list</a></span><span class="op">(</span><span class="va">data_row</span><span class="op">)</span></span></code></pre></div>
-<p>The <code><a href="../reference/row_to_list.html">row_to_list()</a></code> function automatically handles allowed
-strings and issues warnings if invalid values are detected. This ensures
-that data passed to the FMF preeclampsia calculator adheres to required
-standards.</p>
-</div>
+Please see: <a href="data_specification.html">Data
+Specifications</a></p>
+<p>For simplicity, the package includes a demo data set that can be
+loaded as follows:</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">demo_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_demo_data.html">get_demo_data</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>This data set can act as a template to see ow your data should be
+structured.</p>
 </div>
 <div class="section level2">
 <h2 id="local-risk-calculation">Local Risk Calculation<a class="anchor" aria-label="anchor" href="#local-risk-calculation"></a>
 </h2>
+<p>Your data set must adhere to the following standards to be processed.
+Please see: <a href="articles/data_specification.html">Data
+specification</a></p>
 <div class="section level3">
 <h3 id="getting-moms-multiples-of-median">Getting MoMs (Multiples of Median)<a class="anchor" aria-label="anchor" href="#getting-moms-multiples-of-median"></a>
 </h3>
 <p>The package calculates MoM values for key biomarkers:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Convert a data row to parameter list</span></span>
 <span><span class="va">params</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/row_to_list.html">row_to_list</a></span><span class="op">(</span><span class="va">demo_data</span><span class="op">[</span><span class="fl">1</span>,<span class="op">]</span><span class="op">)</span></span>
 <span></span>
@@ -234,7 +128,7 @@ standards.</p>
 <h3 id="getting-risk-scores">Getting Risk Scores<a class="anchor" aria-label="anchor" href="#getting-risk-scores"></a>
 </h3>
 <p>Calculate preeclampsia risk using the formula-based method:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate risk for a single patient</span></span>
 <span><span class="va">risk_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_formula_risk.html">calculate_formula_risk</a></span><span class="op">(</span><span class="va">params</span>, G <span class="op">=</span> <span class="fl">37</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">risk_results</span><span class="op">)</span></span>
@@ -259,8 +153,11 @@ measurements</p></li>
 <div class="section level2">
 <h2 id="online-risk-calculation">Online Risk Calculation<a class="anchor" aria-label="anchor" href="#online-risk-calculation"></a>
 </h2>
+<p>Your data set must adhere to the following standards to be processed.
+Please see: <a href="articles/data_specification.html">Data
+specification</a></p>
 <p>The package can also submit data to the FMF online calculator:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate risk using online calculator</span></span>
 <span><span class="va">online_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pe_risk.html">calculate_pe_risk</a></span><span class="op">(</span></span>
 <span>  <span class="va">demo_data</span>,</span>
@@ -273,7 +170,7 @@ measurements</p></li>
 </h3>
 <p>For documentation and retrieval, the package can save the FMF
 calculator response pages:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract risk scores from saved HTML files</span></span>
 <span><span class="va">saved_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_risk_scores_from_files.html">extract_risk_scores_from_files</a></span><span class="op">(</span></span>
 <span>  response_dir <span class="op">=</span> <span class="st">"calculator_responses"</span>,</span>
@@ -291,7 +188,7 @@ calculator response pages:</p>
 <h3 id="comparing-online-and-local-results">Comparing Online and Local Results<a class="anchor" aria-label="anchor" href="#comparing-online-and-local-results"></a>
 </h3>
 <p>You can compare results from both methods:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate risks using both methods</span></span>
 <span><span class="va">formula_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pe_risk.html">calculate_pe_risk</a></span><span class="op">(</span><span class="va">demo_data</span>, method <span class="op">=</span> <span class="st">"formula"</span><span class="op">)</span></span>
 <span><span class="va">online_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculate_pe_risk.html">calculate_pe_risk</a></span><span class="op">(</span><span class="va">demo_data</span>, method <span class="op">=</span> <span class="st">"online"</span><span class="op">)</span></span>
