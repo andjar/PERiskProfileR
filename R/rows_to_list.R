@@ -235,6 +235,12 @@ row_to_list <- function(row, validate = TRUE) {
     param_list[["previous_ga"]] <- previous_ga_weeks + previous_ga_days / 7
   }
 
+  # check that ga is within limits
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
+  if (param_list$ga*7 < 77 || param_list$ga*7 > 99) {
+    stop("Gestational age outside allowed limits of 77-99 days!")
+  }
+
   # Maternal age at estimated date of delivery (years)
   # https://doi.org/10.1016/j.ajog.2019.11.1247
   param_list$age <- as.numeric(
