@@ -364,16 +364,18 @@ row_to_list <- function(row, validate = TRUE) {
     param_list$height <- ifelse(param_list$height > 198, 198, param_list$height)
   }
 
-  if (param_list$previous_ga < 24 || param_list$previous_ga > 42) {
-    warning("Truncation of previous_ga (should be 24-42 weeks)")
-    param_list$previous_ga <- ifelse(param_list$previous_ga < 24, 24, param_list$previous_ga)
-    param_list$previous_ga <- ifelse(param_list$previous_ga > 42, 42, param_list$previous_ga)
-  }
+  if (param_list$previous == 1) {
+    if (param_list$previous_ga < 24 || param_list$previous_ga > 42) {
+      warning("Truncation of previous_ga (should be 24-42 weeks)")
+      param_list$previous_ga <- ifelse(param_list$previous_ga < 24, 24, param_list$previous_ga)
+      param_list$previous_ga <- ifelse(param_list$previous_ga > 42, 42, param_list$previous_ga)
+    }
 
-  if (param_list$previous_interval < 0.25 || param_list$previous_interval > 15) {
-    warning("Truncation of previous_interval (should be 0.25-15 years)")
-    param_list$previous_interval <- ifelse(param_list$previous_interval < 0.25, 0.25, param_list$previous_interval)
-    param_list$previous_interval <- ifelse(param_list$previous_interval > 15, 15, param_list$previous_interval)
+    if (param_list$previous_interval < 0.25 || param_list$previous_interval > 15) {
+      warning("Truncation of previous_interval (should be 0.25-15 years)")
+      param_list$previous_interval <- ifelse(param_list$previous_interval < 0.25, 0.25, param_list$previous_interval)
+      param_list$previous_interval <- ifelse(param_list$previous_interval > 15, 15, param_list$previous_interval)
+    }
   }
 
   return(param_list)

@@ -92,13 +92,25 @@ get_expected_plgf <- function(form_data) {
 #' @return Numeric value representing PlGF MoM or NA if PlGF is excluded
 #' @keywords local
 #' @export
-get_mom_plgf <- function(form_data) {
+get_mom_plgf <- function(form_data, truncation = TRUE) {
   if (form_data$include_plgf == 0) {
     mom_to_return <- NA
   } else if (form_data$include_plgf == 1) {
     mom_to_return <- form_data$plgf_mom
   } else if (form_data$include_plgf == 2) {
     mom_to_return <- form_data$plgf / get_expected_plgf(form_data)
+  }
+
+  # Truncation
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
+  upper_limit <- 10^0.56550992
+  lower_limit <- 10^-0.5655099
+  if (truncation) {
+    if (mom_to_return < lower_limit || mom_to_return > upper_limit) {
+      warning(paste0("The MoM for PlGF will be truncated from ", mom_to_return))
+      mom_to_return <- max(mom_to_return, lower_limit)
+      mom_to_return <- min(mom_to_return, upper_limit)
+    }
   }
 
   return(mom_to_return)
@@ -171,10 +183,23 @@ get_expected_utpi <- function(form_data) {
 #' @return Numeric value representing UtAPI MoM
 #' @keywords local
 #' @export
-get_mom_utpi <- function(form_data) {
-  return(
-    form_data$utpi / get_expected_utpi(form_data)
-  )
+get_mom_utpi <- function(form_data, truncation = TRUE) {
+
+  mom_to_return <- form_data$utpi / get_expected_utpi(form_data)
+
+  # Truncation
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
+  upper_limit <- 10^0.42161519
+  lower_limit <- 10^-0.4216152
+  if (truncation) {
+    if (mom_to_return < lower_limit || mom_to_return > upper_limit) {
+      warning(paste0("The MoM for UtAPI will be truncated from ", mom_to_return))
+      mom_to_return <- max(mom_to_return, lower_limit)
+      mom_to_return <- min(mom_to_return, upper_limit)
+    }
+  }
+
+  return(mom_to_return)
 }
 
 #' Calculate Expected Mean Arterial Pressure
@@ -264,10 +289,23 @@ get_expected_map <- function(form_data) {
 #' @return Numeric value representing MAP MoM
 #' @keywords local
 #' @export
-get_mom_map <- function(form_data) {
-  return(
-    form_data$map / get_expected_map(form_data)
-  )
+get_mom_map <- function(form_data, truncation = TRUE) {
+
+  mom_to_return <- form_data$map / get_expected_map(form_data)
+
+  # Truncation
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
+  upper_limit <- 10^0.12240759
+  lower_limit <- 10^-0.1224076
+  if (truncation) {
+    if (mom_to_return < lower_limit || mom_to_return > upper_limit) {
+      warning(paste0("The MoM for MAP will be truncated from ", mom_to_return))
+      mom_to_return <- max(mom_to_return, lower_limit)
+      mom_to_return <- min(mom_to_return, upper_limit)
+    }
+  }
+
+  return(mom_to_return)
 }
 
 #' Calculate Prior Risk
@@ -477,8 +515,8 @@ calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE) {
                       )$value
 
   if (report_as_text == TRUE) {
-    risk_prior <- round(1/round(risk_prior, 4))
-    risk       <- round(1/round(risk, 4))
+    risk_prior <- paste0("1 in ", round(1/round(risk_prior, 4)))
+    risk       <- paste0("1 in ", round(1/round(risk, 4)))
   }
 
   return(list(
