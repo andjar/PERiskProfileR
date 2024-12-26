@@ -47,32 +47,48 @@ get_expected_plgf <- function(form_data) {
 
   mom <- intercept +
 
-    # Manufacturer
+    # Manufacturer ----
+    # Intercept: DELFIA Xpress
     ifelse(form_data$plgf_machine == 1, intercept_delfia,  0) +
+    # Intercept: BRAHMS KRYPTOR
     ifelse(form_data$plgf_machine == 2, intercept_kryptor, 0) +
+    # Intercept: Cobas e411 	1.542535524
     ifelse(form_data$plgf_machine == 3, intercept_cobas,   0) +
 
-    # GA and weight
-    beta_ga  * (form_data$ga*7-77) +
-    beta_ga2 * (form_data$ga*7-77)^2 +
+    # GA and weight ----
+    # Gestational age in days – 77
+    beta_ga  * (form_data$ga*7 - 77) +
+    # (Gestational age in days – 77)^2
+    beta_ga2 * (form_data$ga*7 - 77)^2 +
+    # Weight in kg - 69
     beta_weight  * (form_data$weight - 69) +
+    # (Weight in kg - 69)^2
     beta_weight2 * (form_data$weight - 69)^2 +
+    # Maternal age in years - 35
     beta_age * (form_data$age - 35) +
 
-    # Ethnicity
+    # Ethnicity ----
+    # Racial origin: Afro-Caribbean
     ifelse(form_data$race == 2, beta_afro_caribbean, 0) +
+    # Racial origin: South Asian
     ifelse(form_data$race == 3, beta_south_asian, 0) +
+    # Racial origin: East Asian
     ifelse(form_data$race == 4, beta_east_asian, 0) +
+    # Racial origin: Mixed
     ifelse(form_data$race == 5, beta_mixed, 0) +
 
-    # Smoking, diabetes, conception
-    ifelse(form_data$smoking   == 1, beta_smoking, 0) +
+    # Smoking, diabetes, conception ----
+    # Smoker
+    ifelse(form_data$smoking == 1, beta_smoking, 0) +
+    # Medical history of diabetes mellitus Type 1
     ifelse(form_data$diabetes_type_i == 1, beta_DM_1, 0) +
-    ifelse(form_data$diabetes_type_ii == 1, beta_DM_2, 0) +
+    # Medical history of diabetes mellitus Type 2 treated with insulin
+    ifelse(form_data$diabetes_type_ii == 1 && form_data$diabetes_drugs == 2, beta_DM_2, 0) +
+    # In-vitro fertilization
     ifelse(form_data$conception == 3, beta_in_vitro, 0) +
 
-    # Previous pregnancy WITHOUT preeclampsia
-    ifelse(form_data$previous == 1 && form_data$previous == 2, beta_parous_no_PE, 0)
+    # Parous with no history of pre-eclampsia
+    ifelse(form_data$previous == 1 && form_data$previous_pe == 2, beta_parous_no_PE, 0)
 
   return(10^mom)
 }
@@ -142,16 +158,16 @@ get_expected_utpi <- function(form_data) {
   beta_weight  <- -0.000874430
   beta_weight2 <-  0.000007330
   beta_age     <- -0.000641750
-  beta_afro_caribbean <- 0.021620000
-  beta_east_asian <- 0.007630000
-  beta_mixed <- 0.011990000
-  beta_DM1   <- -0.027490000
+  beta_afro_caribbean <-  0.021620000
+  beta_east_asian     <-  0.007630000
+  beta_mixed          <-  0.011990000
+  beta_DM1            <- -0.027490000
 
   mom <- intercept +
     beta_ga * (form_data$ga*7 - 77) +
     beta_weight  * (form_data$weight - 69) +
     beta_weight2 * (form_data$weight - 69)^2 +
-    beta_age * (form_data$age - 35) + # Men blir mer riktig med -10 istedenfor -35?
+    beta_age * (form_data$age - 35) +
     ifelse(form_data$race == 2, beta_afro_caribbean, 0) +
     ifelse(form_data$race == 4, beta_east_asian, 0) +
     ifelse(form_data$race == 5, beta_mixed, 0) +
@@ -252,7 +268,8 @@ get_expected_map <- function(form_data) {
     ifelse(form_data$smoking == 1, beta_smoking, 0) +
     ifelse(form_data$chronic_hypertension == 1, beta_chronic_hypertension, 0) +
     ifelse(form_data$chronic_hypertension == 1, beta_chronic_hypertension_weight * (form_data$weight - 69), 0) +
-    ifelse(form_data$diabetes_type_i == 1 || form_data$diabetes_type_ii == 2, beta_DM, 0) +
+    ifelse(form_data$diabetes_type_i == 1, beta_DM, 0) +
+    ifelse(form_data$diabetes_type_ii == 2, beta_DM, 0) +
     ifelse(form_data$mother_pe == 1, beta_family_PE, 0)
 
   if (form_data$previous == 1) {
@@ -385,37 +402,51 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
   return(r)
 }
 
-#' Calculate MAP-PI Joint Distribution
-#'
-#' @description
-#' Calculates the joint probability distribution for MAP and PI MoM values
-#'
-#' @param mom_MAP Numeric, MAP MoM value
-#' @param mom_PI Numeric, PI MoM value
-#' @param g Numeric vector, gestational ages
-#'
-#' @return Numeric vector of probability densities
-#' @keywords internal
-get_p_MAP_PI <- function(mom_MAP, mom_PI, g) {
+get_covariance_matrix <- function(has_map = TRUE, has_utpi = TRUE, has_plgf = TRUE) {
+  # https://www.nejm.org/doi/suppl/10.1056/NEJMoa1704559/suppl_file/nejmoa1704559_appendix.pdf
 
-  correlation_matrix <- matrix(c(1, -0.05133, -0.05133, 1), 2, 2)
-  sd_vector <- c(0.03724, 0.12894)
-  covariance_matrix <- diag(sd_vector) %*% correlation_matrix %*% diag(sd_vector)
+  # correlation_matrix <- matrix(
+  #   c(
+  #     1, -0.05133, -0.02791,
+  #     -0.05133, 1, -0.15084,
+  #     -0.02791, -0.15084, 1),
+  #   3, 3)
+  # sd_vector <- c(0.03724, 0.12894, 0.17723)
+  # covariance_matrix <- diag(sd_vector) %*% correlation_matrix %*% diag(sd_vector)
 
-  MAP <- log10(mom_MAP)
-  PI  <- log10(mom_PI)
+  # MAP, PI, PlGF
+  covariance_matrix <- matrix(
+    c(
+      0.00141396, -0.0002726, -0.0001907,
+      -0.0002726, 0.01630906, -0.0034539,
+      -0.0001907, -0.0034539, 0.03147225),
+    3, 3)
 
-  sapply(g, function(x) {
-    mu_MAP <- ifelse(x < 0.09564/0.001824, 0.09564 - 0.001824 * x, 0)
-    mu_PI  <- ifelse(x < 0.54453/0.013143, 0.54453 - 0.013143 * x, 0)
+  ind_to_return <- c(1,2,3)[c(has_map, has_utpi, has_plgf)]
 
-    emdbook::dmvnorm(
-      c(MAP, PI),
-      mu = c(mu_MAP, mu_PI),
-      Sigma = covariance_matrix
-    )
-  })
+  return(covariance_matrix[ind_to_return, ind_to_return])
+}
 
+get_mus <- function(mom_MAP, mom_PI, mom_PlGF, x) {
+  b0_MAP <-  0.088997
+  b1_MAP <- -0.0016711
+
+  b0_PI <-  0.5861
+  b1_PI <- -0.014233
+
+  b0_PlGF <- -0.92352
+  b1_PlGF <- 0.021584
+
+  # mu_MAP  <- ifelse(x < 0.09564/0.001824, 0.09564 - 0.001824 * x, 0)
+  mu_MAP  <- ifelse(x < -b0_MAP/b1_MAP, b0_MAP + b1_MAP * x, 0)
+  # mu_PI   <- ifelse(x < 0.54453/0.013143, 0.54453 - 0.013143 * x, 0)
+  mu_PI  <- ifelse(x < -b0_PI/b1_PI, b0_PI + b1_PI * x, 0)
+  # mu_PlGF <- ifelse(x < 0.93687/0.021930, -0.93687 + 0.021930 * x, 0)
+  mu_PlGF <- ifelse(x < -b0_PlGF/b1_PlGF, b0_PlGF + b1_PlGF * x, 0)
+
+  return(
+    c(mu_MAP, mu_PI, mu_PlGF)[c(!is.na(mom_MAP), !is.na(mom_PI), !is.na(mom_PlGF))]
+  )
 }
 
 #' Calculate MAP-PI-PlGF Joint Distribution
@@ -431,29 +462,19 @@ get_p_MAP_PI <- function(mom_MAP, mom_PI, g) {
 #' @return Numeric vector of probability densities
 #' @keywords internal
 get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
-  # https://www.nejm.org/doi/suppl/10.1056/NEJMoa1704559/suppl_file/nejmoa1704559_appendix.pdf
 
-  correlation_matrix <- matrix(
-    c(
-      1, -0.05133, -0.02791,
-      -0.05133, 1, -0.15084,
-      -0.02791, -0.15084, 1),
-    3, 3)
-  sd_vector <- c(0.03724, 0.12894, 0.17723)
-  covariance_matrix <- diag(sd_vector) %*% correlation_matrix %*% diag(sd_vector)
+  covariance_matrix <- get_covariance_matrix(
+    has_map  = !is.na(mom_MAP),
+    has_utpi = !is.na(mom_PI),
+    has_plgf = !is.na(mom_PlGF)
+    )
 
-  MAP   <- log10(mom_MAP)
-  PI    <- log10(mom_PI)
-  PlGF  <- log10(mom_PlGF)
+  vals_at_point <- c(log10(mom_MAP), log10(mom_PI), log10(mom_PlGF))[c(!is.na(mom_MAP), !is.na(mom_PI), !is.na(mom_PlGF))]
 
   sapply(g, function(x) {
-    mu_MAP  <- ifelse(x < 0.09564/0.001824, 0.09564 - 0.001824 * x, 0)
-    mu_PI   <- ifelse(x < 0.54453/0.013143, 0.54453 - 0.013143 * x, 0)
-    mu_PlGF <- ifelse(x < 0.93687/0.021930, -0.93687 + 0.021930 * x, 0)
-
     emdbook::dmvnorm(
-      c(MAP, PI, PlGF),
-      mu = c(mu_MAP, mu_PI, mu_PlGF),
+      vals_at_point,
+      mu = get_mus(mom_MAP, mom_PI, mom_PlGF, x),
       Sigma = covariance_matrix
     )
   })
@@ -474,11 +495,7 @@ get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
 #' @return Numeric vector of probability densities
 #' @keywords internal
 get_p_prior <- function(g, form_data, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) {
-  if (is.na(mom_PlGF)) {
-    get_p_MAP_PI(mom_MAP = mom_MAP, mom_PI = mom_PI, g = g) * get_prior(form_data, g = g)
-  } else {
     get_p_MAP_PI_PlGF(mom_MAP = mom_MAP, mom_PI = mom_PI, mom_PlGF = mom_PlGF, g = g) * get_prior(form_data, g = g)
-  }
 }
 
 #' Calculate Formula-Based Risk
@@ -499,10 +516,16 @@ get_p_prior <- function(g, form_data, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) 
 #'     \item risk: Final calculated risk
 #'   }
 #' @export
-calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE) {
-  mom_MAP  <- get_mom_map(form_data)
-  mom_PI   <- get_mom_utpi(form_data)
-  mom_PlGF <- get_mom_plgf(form_data)
+calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) {
+  if (is.na(mom_MAP)) {
+    mom_MAP  <- get_mom_map(form_data)
+  }
+  if (is.na(mom_PI)) {
+    mom_PI   <- get_mom_utpi(form_data)
+  }
+  if (is.na(mom_PlGF)) {
+    mom_PlGF <- get_mom_plgf(form_data)
+  }
   risk_prior <- get_prior(form_data, g = G, pnorm = TRUE)
   risk <- integrate(get_p_prior,
                     lower = 24, upper = G,
@@ -515,8 +538,8 @@ calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE) {
                       )$value
 
   if (report_as_text == TRUE) {
-    risk_prior <- paste0("1 in ", round(1/round(risk_prior, 4)))
-    risk       <- paste0("1 in ", round(1/round(risk, 4)))
+    risk_prior <- risk_to_text(risk_prior)
+    risk <- risk_to_text(risk)
   }
 
   return(list(
