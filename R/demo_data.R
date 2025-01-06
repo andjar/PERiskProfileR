@@ -18,3 +18,7 @@
 get_demo_data <- function() {
   return(fread(system.file("extdata", "demo.csv", package = "PERiskProfileR")))
 }
+
+get_demo_data_risks <- function() {
+  return(fread(system.file("extdata", "demo_risk.csv", package = "PERiskProfileR")))
+}
