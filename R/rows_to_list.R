@@ -53,6 +53,7 @@ get_expected_columns <- function() {
     "previous_ga_weeks",    # Weeks of gestation at previous delivery
     "previous_ga_days",     # Days of gestation at previous delivery
     "previous_interval",    # Years since previous delivery
+    "previous_ga",
 
     # Biophysical Measurements
     "map",            # Mean Arterial Pressure
@@ -179,6 +180,8 @@ row_to_list <- function(row, validate = TRUE) {
     }
   }
 
+  time_formats_to_guess <- c("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d")
+
   # Define the mapping between data frame column names and form parameters
   param_list <- list(
     # Pregnancy Details
@@ -232,7 +235,27 @@ row_to_list <- function(row, validate = TRUE) {
   )
 
   if (!is.na(param_list$previous_ga_weeks) & !is.na(param_list$previous_ga_days)) {
-    param_list[["previous_ga"]] <- previous_ga_weeks + previous_ga_days / 7
+    param_list[["previous_ga"]] <- param_list$previous_ga_weeks + param_list$previous_ga_days / 7
+  }
+
+  if (!is.na(param_list$biochemical_at)) {
+    param_list[["biochemical_ga"]] <- param_list$ga + as.numeric(
+      difftime(
+        as.Date(param_list$biochemical_at, tryFormats = time_formats_to_guess),
+        as.Date(param_list$ga_at, tryFormats = time_formats_to_guess),
+        units = "weeks"
+      )
+    )
+  }
+
+  if (!is.na(param_list$biophysical_at)) {
+    param_list[["biophysical_ga"]] <- param_list$ga + as.numeric(
+      difftime(
+        as.Date(param_list$biophysical_at, tryFormats = time_formats_to_guess),
+        as.Date(param_list$ga_at, tryFormats = time_formats_to_guess),
+        units = "weeks"
+      )
+    )
   }
 
   # check that ga is within limits
@@ -245,8 +268,8 @@ row_to_list <- function(row, validate = TRUE) {
   # https://doi.org/10.1016/j.ajog.2019.11.1247
   param_list$age <- as.numeric(
     difftime(
-      as.Date(param_list$ga_at, tryFormats = c("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d")) + (40 - param_list$ga)*7,
-      as.Date(param_list$dob, tryFormats = c("%d.%m.%Y", "%d-%m-%Y", "%Y-%m-%d")),
+      as.Date(param_list$ga_at, tryFormats = time_formats_to_guess) + (40 - param_list$ga)*7,
+      as.Date(param_list$dob, tryFormats = time_formats_to_guess),
       units = "days"
     )
     ) / 365.25
@@ -289,13 +312,17 @@ row_to_list <- function(row, validate = TRUE) {
   param_list$diabetes_type_i <- ifelse(param_list$diabetes_type_i == "yes", 1, 0)
 
   param_list$diabetes_type_ii <- tolower(param_list$diabetes_type_ii)
-  if(any(!param_list$diabetes_type_ii %in% c("yes", "no"))) {
+  if (any(!param_list$diabetes_type_ii %in% c("yes", "no"))) {
     warning("Unknown values found in column for Diabetes Type II!")
   }
   param_list$diabetes_type_ii <- ifelse(param_list$diabetes_type_ii == "yes", 1, 0)
 
+  if (param_list$diabetes_type_i == 1 & param_list$diabetes_type_ii == 1) {
+    stop("You are not allowed to have both diabetes type i and ii!")
+  }
+
   param_list$diabetes_drugs <- tolower(param_list$diabetes_drugs)
-  if (param_list$diabetes_type_i == 1 || param_list$diabetes_type_ii == 1) {
+  if (param_list$diabetes_type_ii == 1) {
     if(any(!param_list$diabetes_drugs %in% c("diet only", "insulin", "insulin+metformin", "metformin", ""))) {
       warning("Unknown values found in column for Diabetes Drugs!")
     }
@@ -323,7 +350,7 @@ row_to_list <- function(row, validate = TRUE) {
   param_list$include_plgf <- which(param_list$include_plgf == c("no", "mom", "raw")) - 1
   # NB: From 0-2
 
-  if(param_list$include_plgf > 0) {
+  if(param_list$include_plgf == 2) {
     param_list$plgf_machine <- tolower(param_list$plgf_machine)
     if(any(!param_list$plgf_machine %in% c("delfia", "kryptor", "roche"))) {
       warning("Unknown values found in column for PlGF Machine!")
@@ -338,7 +365,7 @@ row_to_list <- function(row, validate = TRUE) {
   param_list$include_pappa <- which(param_list$include_pappa == c("no", "mom", "raw")) - 1
   # NB: From 0-2
 
-  if(param_list$include_pappa > 0) {
+  if(param_list$include_pappa == 2) {
     param_list$pappa_machine <- tolower(param_list$pappa_machine)
     if(any(!param_list$pappa_machine %in% c("delfia", "kryptor", "roche"))) {
       warning("Unknown values found in column for PAPP-A Machine!")
@@ -346,43 +373,25 @@ row_to_list <- function(row, validate = TRUE) {
     param_list$pappa_machine <- which(param_list$pappa_machine == c("delfia", "kryptor", "roche"))
   }
 
+  if (param_list$previous == 1) {
+    param_list$previous_interval <- as.numeric(
+      difftime(
+        as.Date(param_list$ga_at, tryFormats = time_formats_to_guess) - param_list$ga*7,
+        as.Date(param_list$previous_delivered_at, tryFormats = time_formats_to_guess),
+        units = "days"
+      )
+    ) / 365.25
+
+    param_list$previous_pe <- tolower(param_list$previous_pe)
+    if(any(!param_list$previous_pe %in% c("yes", "no"))) {
+      warning("Unknown values found in column for previous preeclampsia!")
+    }
+    param_list$previous_pe <- ifelse(param_list$previous_pe == "yes", 1, 2)
+  }
+
+
   # Remove NULL values and NA values
   param_list <- param_list[!sapply(param_list, is.null) & !sapply(param_list, is.na)]
-
-  # Truncations
-  # https://doi.org/10.1016/j.ajog.2019.11.1247
-
-  if (param_list$age < 12 || param_list$age > 55) {
-    warning("Truncation of age (should be 12-55 years)")
-    param_list$age <- ifelse(param_list$age < 12, 12, param_list$age)
-    param_list$age <- ifelse(param_list$age > 55, 55, param_list$age)
-  }
-
-  if (param_list$weight < 34 || param_list$weight > 190) {
-    warning("Truncation of weight (should be 34-190 kg)")
-    param_list$weight <- ifelse(param_list$weight < 34, 34, param_list$weight)
-    param_list$weight <- ifelse(param_list$weight > 190, 190, param_list$weight)
-  }
-
-  if (param_list$height < 127 || param_list$height > 198) {
-    warning("Truncation of height (should be 127-198 cm)")
-    param_list$height <- ifelse(param_list$height < 127, 127, param_list$height)
-    param_list$height <- ifelse(param_list$height > 198, 198, param_list$height)
-  }
-
-  if (param_list$previous == 1) {
-    if (param_list$previous_ga < 24 || param_list$previous_ga > 42) {
-      warning("Truncation of previous_ga (should be 24-42 weeks)")
-      param_list$previous_ga <- ifelse(param_list$previous_ga < 24, 24, param_list$previous_ga)
-      param_list$previous_ga <- ifelse(param_list$previous_ga > 42, 42, param_list$previous_ga)
-    }
-
-    if (param_list$previous_interval < 0.25 || param_list$previous_interval > 15) {
-      warning("Truncation of previous_interval (should be 0.25-15 years)")
-      param_list$previous_interval <- ifelse(param_list$previous_interval < 0.25, 0.25, param_list$previous_interval)
-      param_list$previous_interval <- ifelse(param_list$previous_interval > 15, 15, param_list$previous_interval)
-    }
-  }
 
   return(param_list)
 }
