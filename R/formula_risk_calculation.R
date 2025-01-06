@@ -26,6 +26,8 @@ get_expected_plgf <- function(form_data) {
   # Appendix S1 from
   # https://obgyn.onlinelibrary.wiley.com/doi/10.1002/uog.19112
 
+  form_data <- truncate_for_mom(form_data)
+
   intercept           <-  0
   intercept_delfia    <-  1.332959332
   intercept_cobas     <-  1.542535524
@@ -57,9 +59,9 @@ get_expected_plgf <- function(form_data) {
 
     # GA and weight ----
     # Gestational age in days – 77
-    beta_ga  * (form_data$ga*7 - 77) +
+    beta_ga  * (form_data$biochemical_ga*7 - 77) +
     # (Gestational age in days – 77)^2
-    beta_ga2 * (form_data$ga*7 - 77)^2 +
+    beta_ga2 * (form_data$biochemical_ga*7 - 77)^2 +
     # Weight in kg - 69
     beta_weight  * (form_data$weight - 69) +
     # (Weight in kg - 69)^2
@@ -83,7 +85,7 @@ get_expected_plgf <- function(form_data) {
     # Medical history of diabetes mellitus Type 1
     ifelse(form_data$diabetes_type_i == 1, beta_DM_1, 0) +
     # Medical history of diabetes mellitus Type 2 treated with insulin
-    ifelse(form_data$diabetes_type_ii == 1 && form_data$diabetes_drugs == 2, beta_DM_2, 0) +
+    ifelse(form_data$diabetes_type_ii == 1 && form_data$diabetes_drugs %in% c(2, 3), beta_DM_2, 0) +
     # In-vitro fertilization
     ifelse(form_data$conception == 3, beta_in_vitro, 0) +
 
@@ -117,18 +119,6 @@ get_mom_plgf <- function(form_data, truncation = TRUE) {
     mom_to_return <- form_data$plgf / get_expected_plgf(form_data)
   }
 
-  # Truncation
-  # https://doi.org/10.1016/j.ajog.2019.11.1247
-  upper_limit <- 10^0.56550992
-  lower_limit <- 10^-0.5655099
-  if (truncation) {
-    if (mom_to_return < lower_limit || mom_to_return > upper_limit) {
-      warning(paste0("The MoM for PlGF will be truncated from ", mom_to_return))
-      mom_to_return <- max(mom_to_return, lower_limit)
-      mom_to_return <- min(mom_to_return, upper_limit)
-    }
-  }
-
   return(mom_to_return)
 }
 
@@ -153,6 +143,9 @@ get_mom_plgf <- function(form_data, truncation = TRUE) {
 #' @keywords local
 #' @export
 get_expected_utpi <- function(form_data) {
+
+  form_data <- truncate_for_mom(form_data)
+
   intercept    <-  0.264570000
   beta_ga      <- -0.004838365
   beta_weight  <- -0.000874430
@@ -164,7 +157,7 @@ get_expected_utpi <- function(form_data) {
   beta_DM1            <- -0.027490000
 
   mom <- intercept +
-    beta_ga * (form_data$ga*7 - 77) +
+    beta_ga * (form_data$biophysical_ga*7 - 77) +
     beta_weight  * (form_data$weight - 69) +
     beta_weight2 * (form_data$weight - 69)^2 +
     beta_age * (form_data$age - 35) +
@@ -203,18 +196,6 @@ get_mom_utpi <- function(form_data, truncation = TRUE) {
 
   mom_to_return <- form_data$utpi / get_expected_utpi(form_data)
 
-  # Truncation
-  # https://doi.org/10.1016/j.ajog.2019.11.1247
-  upper_limit <- 10^0.42161519
-  lower_limit <- 10^-0.4216152
-  if (truncation) {
-    if (mom_to_return < lower_limit || mom_to_return > upper_limit) {
-      warning(paste0("The MoM for UtAPI will be truncated from ", mom_to_return))
-      mom_to_return <- max(mom_to_return, lower_limit)
-      mom_to_return <- min(mom_to_return, upper_limit)
-    }
-  }
-
   return(mom_to_return)
 }
 
@@ -245,6 +226,8 @@ get_mom_utpi <- function(form_data, truncation = TRUE) {
 #' @export
 get_expected_map <- function(form_data) {
 
+  form_data <- truncate_for_mom(form_data)
+
   intercept    <-                      1.936400000
   beta_ga      <-                      0.000428017
   beta_ga2     <-                     -0.000028811
@@ -259,8 +242,8 @@ get_expected_map <- function(form_data) {
   beta_family_PE <-                    0.006240000
 
   mom <- intercept +
-    beta_ga  * (form_data$ga*7-77) +
-    beta_ga2 * (form_data$ga*7-77)^2 +
+    beta_ga  * (form_data$biophysical_ga*7-77) +
+    beta_ga2 * (form_data$biophysical_ga*7-77)^2 +
     beta_weight  * (form_data$weight - 69) +
     beta_weight2 * (form_data$weight - 69)^2 +
     beta_height  * (form_data$height - 164) +
@@ -269,7 +252,7 @@ get_expected_map <- function(form_data) {
     ifelse(form_data$chronic_hypertension == 1, beta_chronic_hypertension, 0) +
     ifelse(form_data$chronic_hypertension == 1, beta_chronic_hypertension_weight * (form_data$weight - 69), 0) +
     ifelse(form_data$diabetes_type_i == 1, beta_DM, 0) +
-    ifelse(form_data$diabetes_type_ii == 2, beta_DM, 0) +
+    ifelse(form_data$diabetes_type_ii == 1, beta_DM, 0) +
     ifelse(form_data$mother_pe == 1, beta_family_PE, 0)
 
   if (form_data$previous == 1) {
@@ -281,7 +264,7 @@ get_expected_map <- function(form_data) {
 
     } else {
       intercept_parous <- -0.006630000
-      beta_interval    <- 0.000826390
+      beta_interval    <-  0.000826390
 
       mom <- mom +
         intercept_parous +
@@ -310,18 +293,6 @@ get_mom_map <- function(form_data, truncation = TRUE) {
 
   mom_to_return <- form_data$map / get_expected_map(form_data)
 
-  # Truncation
-  # https://doi.org/10.1016/j.ajog.2019.11.1247
-  upper_limit <- 10^0.12240759
-  lower_limit <- 10^-0.1224076
-  if (truncation) {
-    if (mom_to_return < lower_limit || mom_to_return > upper_limit) {
-      warning(paste0("The MoM for MAP will be truncated from ", mom_to_return))
-      mom_to_return <- max(mom_to_return, lower_limit)
-      mom_to_return <- min(mom_to_return, upper_limit)
-    }
-  }
-
   return(mom_to_return)
 }
 
@@ -340,19 +311,21 @@ get_mom_map <- function(form_data, truncation = TRUE) {
 get_prior <- function(form_data, g = 37, pnorm = FALSE){
 
   intercept <- 54.3637
-  sigma <- 6.8833
+  sigma     <- 6.8833
 
-  beta_age <- -0.206886
-  beta_height <- 0.11711
-  beta_afro_caribbean <- -2.6786
-  beta_south_asian <- -1.129
+  beta_age                  <- -0.206886
+  beta_height               <- 0.11711
+  beta_afro_caribbean       <- -2.6786
+  beta_south_asian          <- -1.129
   beta_chronic_hypertension <- -7.2897
-  beta_SLE_APS <- -3.0519
-  beta_in_vitro <- -1.6327
+  beta_SLE_APS              <- -3.0519
+  beta_in_vitro             <- -1.6327
 
-  beta_weight <- -0.0694096
-  beta_family_PE <- -1.7154
-  beta_DM <- -3.3899
+  beta_weight               <- -0.0694096
+  beta_family_PE            <- -1.7154
+  beta_DM                   <- -3.3899
+
+  form_data <- truncate_for_risk(form_data)
 
   mu <- intercept +
     ifelse(form_data$age >= 35, beta_age * (form_data$age-35), 0) +
@@ -360,7 +333,7 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
     ifelse(form_data$race == 2, beta_afro_caribbean, 0) +
     ifelse(form_data$race == 3, beta_south_asian, 0) +
     ifelse(form_data$chronic_hypertension == 1, beta_chronic_hypertension, 0) +
-    ifelse(form_data$sle == 1 || form_data$aps == 1, beta_SLE_APS, 0) +
+    ifelse(form_data$sle == 1 && form_data$aps == 1, beta_SLE_APS, 0) +
     ifelse(form_data$conception == 3, beta_in_vitro, 0)
 
   if (form_data$previous == 1) {
@@ -375,13 +348,13 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
     } else {
       intercept_parity <- -4.335
       beta_interval    <- -4.15137651
-      beta_interval_05 <- 9.21473572
-      beta_previous_ga <- 0.01549673
+      beta_interval_05 <-  9.21473572
+      beta_previous_ga <-  0.01549673
 
       mu <- mu +
         intercept_parity +
-        beta_interval * form_data$previous_interval^-1 +
-        beta_interval * form_data$previous_interval^-0.5 +
+        beta_interval * (form_data$previous_interval^-1) +
+        beta_interval_05 * (form_data$previous_interval^-0.5) +
         beta_previous_ga * (form_data$previous_ga - 24)^2
     }
   }
@@ -469,7 +442,9 @@ get_p_MAP_PI_PlGF <- function(mom_MAP, mom_PI, mom_PlGF, g) {
     has_plgf = !is.na(mom_PlGF)
     )
 
-  vals_at_point <- c(log10(mom_MAP), log10(mom_PI), log10(mom_PlGF))[c(!is.na(mom_MAP), !is.na(mom_PI), !is.na(mom_PlGF))]
+  vals_at_point <- c(
+    log10(mom_MAP), log10(mom_PI), log10(mom_PlGF)
+    )[c(!is.na(mom_MAP), !is.na(mom_PI), !is.na(mom_PlGF))]
 
   sapply(g, function(x) {
     emdbook::dmvnorm(
@@ -516,15 +491,66 @@ get_p_prior <- function(g, form_data, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) 
 #'     \item risk: Final calculated risk
 #'   }
 #' @export
-calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA) {
+calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE, mom_MAP = NA, mom_PI = NA, mom_PlGF = NA, truncation_of_mom = TRUE) {
+
+  result <- list()
+
   if (is.na(mom_MAP)) {
     mom_MAP  <- get_mom_map(form_data)
+    result[["mom_MAP"]] <- mom_MAP
+
+    if (truncation_of_mom) {
+      # Truncation
+      # https://doi.org/10.1016/j.ajog.2019.11.1247
+      upper_limit <- 10^0.12240759
+      lower_limit <- 10^-0.1224076
+      if (mom_MAP < lower_limit || mom_MAP > upper_limit) {
+        warning(paste0("The MoM for MAP will be truncated from ", mom_MAP))
+        mom_MAP <- max(mom_MAP, lower_limit)
+        mom_MAP <- min(mom_MAP, upper_limit)
+      }
+    }
+
+  } else {
+    result[["mom_MAP"]] <- mom_MAP
   }
+
   if (is.na(mom_PI)) {
     mom_PI   <- get_mom_utpi(form_data)
+    result[["mom_PI"]] <- mom_PI
+
+    if (truncation_of_mom) {
+      # Truncation
+      # https://doi.org/10.1016/j.ajog.2019.11.1247
+      upper_limit <- 10^0.42161519
+      lower_limit <- 10^-0.4216152
+      if (mom_PI < lower_limit || mom_PI > upper_limit) {
+        warning(paste0("The MoM for UtAPI will be truncated from ", mom_PI))
+        mom_PI <- max(mom_PI, lower_limit)
+        mom_PI <- min(mom_PI, upper_limit)
+      }
+    }
+  } else {
+    result[["mom_PI"]] <- mom_PI
   }
+
   if (is.na(mom_PlGF)) {
     mom_PlGF <- get_mom_plgf(form_data)
+    result[["mom_PlGF"]] <- mom_PlGF
+
+    if (truncation_of_mom) {
+      # Truncation
+      # https://doi.org/10.1016/j.ajog.2019.11.1247
+      upper_limit <- 10^0.56550992
+      lower_limit <- 10^-0.5655099
+      if (mom_PlGF < lower_limit || mom_PlGF > upper_limit) {
+        warning(paste0("The MoM for PlGF will be truncated from ", mom_PlGF))
+        mom_PlGF <- max(mom_PlGF, lower_limit)
+        mom_PlGF <- min(mom_PlGF, upper_limit)
+      }
+    }
+  } else {
+    result[["mom_PlGF"]] <- mom_PlGF
   }
   risk_prior <- get_prior(form_data, g = G, pnorm = TRUE)
   risk <- integrate(get_p_prior,
@@ -542,11 +568,54 @@ calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE, mo
     risk <- risk_to_text(risk)
   }
 
-  return(list(
-    mom_MAP = mom_MAP,
-    mom_PI = mom_PI,
-    mom_PlGF = mom_PlGF,
-    risk_prior = risk_prior,
-    risk = risk
-  ))
+  result[["risk_prior"]] <- risk_prior
+  result[["risk"]] <- risk
+
+  return(result)
+}
+
+truncate_for_mom <- function(form_data) {
+  form_data$weight <- min(form_data$weight, 130)
+  form_data$previous_interval <- min(form_data$previous_interval, 20)
+  return(form_data)
+}
+
+truncate_for_risk <- function(form_data) {
+
+  # Truncations
+  # https://doi.org/10.1016/j.ajog.2019.11.1247
+
+  if (form_data$age < 12 || form_data$age > 55) {
+    warning("Truncation of age (should be 12-55 years)")
+    form_data$age <- ifelse(form_data$age < 12, 12, form_data$age)
+    form_data$age <- ifelse(form_data$age > 55, 55, form_data$age)
+  }
+
+  if (form_data$weight < 34 || form_data$weight > 190) {
+    warning("Truncation of weight (should be 34-190 kg)")
+    form_data$weight <- ifelse(form_data$weight < 34, 34, form_data$weight)
+    form_data$weight <- ifelse(form_data$weight > 190, 190, form_data$weight)
+  }
+
+  if (form_data$height < 127 || form_data$height > 198) {
+    warning("Truncation of height (should be 127-198 cm)")
+    form_data$height <- ifelse(form_data$height < 127, 127, form_data$height)
+    form_data$height <- ifelse(form_data$height > 198, 198, form_data$height)
+  }
+
+  if (form_data$previous == 1) {
+    if (form_data$previous_ga < 24 || form_data$previous_ga > 42) {
+      warning("Truncation of previous_ga (should be 24-42 weeks)")
+      form_data$previous_ga <- ifelse(form_data$previous_ga < 24, 24, form_data$previous_ga)
+      form_data$previous_ga <- ifelse(form_data$previous_ga > 42, 42, form_data$previous_ga)
+    }
+
+    if (form_data$previous_interval < 0.25 || form_data$previous_interval > 15) {
+      warning("Truncation of previous_interval (should be 0.25-15 years)")
+      form_data$previous_interval <- ifelse(form_data$previous_interval < 0.25, 0.25, form_data$previous_interval)
+      form_data$previous_interval <- ifelse(form_data$previous_interval > 15, 15, form_data$previous_interval)
+    }
+  }
+
+  return(form_data)
 }
