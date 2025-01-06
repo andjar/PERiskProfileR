@@ -85,10 +85,44 @@ calculate_pe_risk <- function(data,
   n_rows <- nrow(data)
   df_out <- copy(data)
 
+  # Initialize timing variables before the loop
+  start_time <- Sys.time()
+  last_iter_time <- Sys.time()
+  avg_time_per_iter <- NULL
+
   # Process each row
   for (i in seq_len(n_rows)) {
+
     if (verbose) {
-      cat(sprintf("\rProcessing row %d of %d", i, n_rows))
+      current_time <- Sys.time()
+
+      # Calculate average time per iteration (after first iteration)
+      if (i > 1) {
+        iter_duration <- as.numeric(difftime(current_time, last_iter_time, units = "secs"))
+
+        # Update moving average
+        if (is.null(avg_time_per_iter)) {
+          avg_time_per_iter <- iter_duration
+        } else {
+          avg_time_per_iter <- 0.1 * iter_duration + 0.9 * avg_time_per_iter
+        }
+
+        # Estimate remaining time
+        remaining_iters <- n_rows - i
+        eta_secs <- remaining_iters * avg_time_per_iter
+
+        # Format ETA nicely
+        eta_mins <- floor(eta_secs / 60)
+        eta_secs <- round(eta_secs %% 60)
+
+        cat(sprintf("\rProcessing row %d of %d (ETA: %02d:%02d)",
+                    i, n_rows, eta_mins, eta_secs))
+      } else {
+        cat(sprintf("\rProcessing row %d of %d", i, n_rows))
+      }
+
+      # Update last iteration time
+      last_iter_time <- current_time
     }
 
     row_data <- row_to_list(data[i,])
