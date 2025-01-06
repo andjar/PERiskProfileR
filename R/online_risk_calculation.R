@@ -86,6 +86,9 @@ map_to_calculator_form <- function(form_data) {
     param_list[[calculator_name]] <- form_data[[original_name]]
   }
 
+  names(param_list)[names(param_list) == "CalculatorPeMom[previous_ga_weeks]"] <- "previous-ga-weeks"
+  names(param_list)[names(param_list) == "CalculatorPeMom[previous_ga_days]"] <- "previous-ga-days"
+
   return(param_list)
 }
 
@@ -119,8 +122,7 @@ extract_risk_scores <- function(html_content, report_as_text = FALSE) {
     trimws()
 
   if (report_as_text == FALSE) {
-    history_risk <- gsub("1 in ", "", history_risk)
-    history_risk <- 1 / as.numeric(history_risk)
+    history_risk <- text_to_risk(history_risk)
   }
 
   markers_risk <- html_content |>
@@ -129,8 +131,7 @@ extract_risk_scores <- function(html_content, report_as_text = FALSE) {
     trimws()
 
   if (report_as_text == FALSE) {
-    markers_risk <- gsub("1 in ", "", markers_risk)
-    markers_risk <- 1 / as.numeric(markers_risk)
+    markers_risk <- text_to_risk(markers_risk)
   }
 
   mom_MAP_string <- html_content |>
@@ -138,8 +139,12 @@ extract_risk_scores <- function(html_content, report_as_text = FALSE) {
     rvest::html_text() |>
     trimws()
 
-  mom_MAP <- as.numeric(sub(".*pressure.*?\\((\\d+\\.\\d+)\\s*MoM\\).*", "\\1", mom_MAP_string))
-  mom_PI <- as.numeric(sub(".*PI.*?\\((\\d+\\.\\d+)\\s*MoM\\).*", "\\1", mom_MAP_string))
+  matches <- regmatches(mom_MAP_string, gregexpr("\\(([^)]+)\\)", mom_MAP_string))[[1]]
+  capture_1 <- sub("^\\((.*)\\)$", "\\1", matches[1])
+  capture_2 <- sub("^\\((.*)\\)$", "\\1", matches[2])
+
+  mom_MAP <- as.numeric(gsub(" MoM", "", capture_1))
+  mom_PI  <- as.numeric(gsub(" MoM", "", capture_2))
 
   mom_PlGF_string <- html_content |>
     rvest::html_nodes("#pe-report > div:nth-child(3) > div:nth-child(2)") |>
