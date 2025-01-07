@@ -1,10 +1,12 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://andjar.github.io/PERiskProfileR/404.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/articles/data_specifications.html</loc></url>
+<url><loc>https://andjar.github.io/PERiskProfileR/articles/details.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/articles/index.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/articles/PERiskProfileR.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/authors.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/index.html</loc></url>
+<url><loc>https://andjar.github.io/PERiskProfileR/LICENSE.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/reference/calculate_formula_risk.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/reference/calculate_online_risk.html</loc></url>
 <url><loc>https://andjar.github.io/PERiskProfileR/reference/calculate_pe_risk.html</loc></url>

@@ -4,7 +4,8 @@ pkgdown_sha: ~
 articles:
   PERiskProfileR: PERiskProfileR.html
   data_specifications: data_specifications.html
-last_built: 2024-12-23T13:07Z
+  details: details.html
+last_built: 2025-01-07T13:16Z
 urls:
   reference: https://andjar.github.io/PERiskProfileR/reference
   article: https://andjar.github.io/PERiskProfileR/articles

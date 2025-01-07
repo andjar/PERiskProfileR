@@ -1,0 +1,147 @@
+---
+title: "Details"
+bibliography: references.bib
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Details}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+
+The FMF risk calculator is developed by the Fetal Medicine Foundation and the underlying model is published in the following papers: [@wrightCompetingRisksModel2015a; @tanScreeningPreeclampsiaMaternal2018; @wrightCompetingRiskApproach2020].
+
+Some details are, however, not well documented and must therefore be considered as experimental from my part.
+
+## MoM Calculations
+
+### General notes
+
+The MoM values for the FMF calculator are estimated from a model published by Tan *et al.* [-@tanScreeningPreeclampsiaMaternal2018]. The regression equations produce the log10 expected values, so to get the actual MoM values:
+
+$$
+MoM = \frac{Measured}{10^{result}}.
+$$
+
+#### Gestational age
+
+The **gestational age** at which the measurements are taken is used to calculate the MoM values. Note that there are three dates that are used in the calculations:
+
+- `ga_at`
+- `biophysical_at`
+- `biochemical_at`
+
+In addition, the user provides a variable `ga` that is the gestational age in weeks at the date `ga_at`. Note that CRL is not used in the calculations. The gestational age at blood sampling is thus calculated as `ga` plus the number of weeks between `biochemical_at` and `ga_at` (`biochemical_at` - `ga_at`). The same approach is used for MAP and UtAPI, but using `biophysical_at`.
+
+For women with previous pregnancies, the gestational age at delivery for the previous pregnancy is given by the user. The **inter-pregnancy interval**, however, is calculated as the number of years (in this package: the number of days divided by 365.25) between the previous *delivery date* and the *beginning of the current pregnancy* (i.e., `ga_at` minus `ga*7` days).
+
+#### Truncations
+
+Some of variables affecting the MoMs are **truncated**. The limits are as follows (haven't found them reported):
+
+- Weight, upper limit: 130 kg
+- Previous interval, upper limit: 20 years
+
+### Variables involved in MoM calculations
+
+|                            | **PlGF** | **UtAPI** |          **MAP**         | **Prior risk**           |
+|:--------------------------:|:--------:|:---------:|:------------------------:|--------------------------|
+| Instrument                 | x        |           |                          |                          |
+| GA                         | x        | x         | x                        |                          |
+| Weight                     | x        | x         | x                        | Only when no CH          |
+| Height                     |          |           | x                        | x                        |
+| Age                        | x        | x         |                          | Only when > 35           |
+| Afro-caribbean             | x        | x         | x                        | x                        |
+| South-Asian                | x        |           |                          | x                        |
+| East-Asian                 | x        | x         |                          |                          |
+| Mixed                      | x        | x         |                          |                          |
+| Smoking                    | x        |           | x                        |                          |
+| Chronic hypertension       |          |           | x                        | x                        |
+| Family history of PE       |          |           | x                        | Only when no CH          |
+| DM-1                       | x        | x         | x                        | Only when no CH          |
+| DM-2                       |          |           | x                        | Only when no CH          |
+| DM-2 with insulin          | x        |           |                          |                          |
+| ALS or SLE                 |          |           |                          | x (See note below)       |
+| In-vitro fertilization     | x        |           |                          | x                        |
+| Parous but not previous PE | x        | x         | x                        |                          |
+| Parous with previous PE    |          | x         | x                        | x                        |
+| Inter-pregnancy interval   |          |           | Only when no previous PE | Only when no previous PE |
+| GA at previous delivery    |          |           |                          | x                        |
+
+## Prior risk
+
+The variables involved in the calculation of prior risk are given in the table above. The regression model will produce a $\hat{\mu}$ from the provided variables. The $\sigma$ is fixed at $\sigma = 6.8833$. The prior risk is then calculated as the cummulative probability of the normal distribution with mean $\hat{\mu}$ and standard deviation $\sigma$ at the value of $g$, where $g$ is the gestational age of interest (in weeks).
+
+::: {.callout-warning}
+**Important note**: Whereas the published papers states that SLE or APS increase the risk of PE, the online FMF calculator seems to give increased risk *only* when *BOTH* SLE AND APS are present.
+:::
+
+### Truncations
+
+Some variables are truncated in calculation of prior risk. Note that these limits are not the same as for MoM calculations (given above). The limits are as follows:
+
+- Maternal age: lower 12 years, upper 55 years
+- Maternal weight: lower 34 kg, upper 190 kg
+- Maternal height: lower 127 cm, upper 198 cm
+- GA at delivery in previous pregnancy: lower 24 weeks, upper 42 weeks
+- Inter-pregnancy interval: lower 0.25 years, upper 15 years
+
+## Posterior risk
+
+The posterior risk $p$ at some gestational week $G$ is calculated as
+
+$$
+p(G) = \frac{\int_{24}^{G} h(g) \cdot \tilde{p}(g) dg}{\int_{24}^{\infty} h(g) \cdot \tilde{p}(g) dg}
+$$
+
+where $\tilde{p}(g)$ is the prior risk at week $g$ (as described above), and $h(g)$ is an adjustment based on MoM of MAP, PlGF and UtAPI (as described below).
+
+The adjustment $h(g)$ is only calculated from the MoMs (and not other variables) and given by the multivariate normal distribution
+
+```
+emdbook::dmvnorm(
+      < measured MoM for MAP, UtAPI, PlGF >,
+      mu = < mu for MAP, UtAPI, PlGF >,
+      Sigma = < Covariance Matrix >
+    )
+```
+
+where the first input is the log10 of the MoMs for MAP, PI and PlGF as calculated above. The $\mu$ for MAP, UtAPI and PlGF is based on gestational age $g$ and the following regression formula:
+
+$$
+\mu = \beta_0 + \beta_1 \cdot g,\,\,\,\,\, g < -\beta_0/\beta_1,
+$$
+and $\mu = 0$ when $g \geq -\beta_0/\beta_1$. The coefficients are
+
+|           | **$\beta_0$** | **$\beta_1$** |
+|-----------|---------------|---------------|
+| **MAP**   | 0.088997      | -0.0016711    |
+| **UtAPI** | 0.5861        | -0.014233     |
+| **PlGF**  | -0.92352      | 0.021584      |
+
+The covariance matrix is as follows:
+
+|          | **MAP**    | **PI**     | **PlGF**   |
+|----------|------------|------------|------------|
+| **MAP**  | 0.00141396 | -0.0002726 | -0.0001907 |
+| **PI**   | -0.0002726 | 0.01630906 | -0.0034539 |
+| **PlGF** | -0.0001907 | -0.0034539 | 0.03147225 |
+
+**Please note**: The `emdbook::dmvnorm()` function is the bottleneck of the package and I haven't found a good way of improving performance yet.
+
+### Truncations
+There are limits for the MoM values, and values outside these limits are **truncated** in the calculations but are still reported un-truncated by the online FMF calculator. The limits are as follows:
+
+- Log10 MoM-MAP: lower: -0.1224076, upper: 0.12240759
+- Log10 MoM-PlGF: lower: -0.5655099, upper: 0.56550992
+- Log10 MoM-UtAPI: lower: -0.4216152, upper: 0.42161519
+
+## References
