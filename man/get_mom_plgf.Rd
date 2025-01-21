@@ -4,7 +4,7 @@
 \alias{get_mom_plgf}
 \title{Calculate PlGF MoM}
 \usage{
-get_mom_plgf(form_data)
+get_mom_plgf(form_data, truncation = TRUE)
 }
 \arguments{
 \item{form_data}{A list containing:

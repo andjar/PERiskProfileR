@@ -2,7 +2,7 @@
 title: "Validation"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{validation}
+  %\VignetteIndexEntry{Validation}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -211,14 +211,12 @@ fwrite(l, file = "data_validation_online.csv")
 remove(l)
 ```
 
-```{r}
-ll <- extract_risk_scores_from_files(data = df, report_as_text = TRUE)
-```
-
 
 To compare the two sets of risk scores, we merge them:
 
 ```{r}
+#| eval: false
+
 dfk <- fread("data_validation_analytical.csv")
 dfl <- fread("data_validation_online.csv")
 df <- merge(
@@ -234,6 +232,9 @@ The validation data are attached with pre-calculated risk scores and can be load
 
 ```{r}
 df <- get_validation_data()
+
+df[, risk.x := as.numeric(gsub("1 in ", "", risk.x))]
+df[, risk.y := as.numeric(gsub("1 in ", "", risk.y))]
 ```
 
 Here, `risk.x` is based on the formula and `risk.y` is based on online calculations.
@@ -268,6 +269,12 @@ ggplot(df, aes(mom_MAP.y - mom_MAP.x)) +
 Note that the difference becomes even smaller if we round the formula-based values to three decimals:
 
 ```{r}
+ggplot(df, aes((round(mom_MAP.x, 3) + mom_MAP.y) / 2, mom_MAP.y - round(mom_MAP.x, 3))) +
+    geom_point() + 
+  labs(x = "Mean", y = "Difference", caption = "MoM MAP")
+```
+
+```{r}
 ggplot(df, aes(mom_MAP.y - round(mom_MAP.x, 3))) +
     geom_density() +
     labs(x = "Online - Formula", y = "Density", caption = "MoM MAP")
@@ -293,13 +300,26 @@ ggplot(df, aes((mom_PI.x + mom_PI.y) / 2, mom_PI.y - mom_PI.x)) +
   labs(x = "Mean", y = "Difference", caption = "MoM UtAPI")
 ```
 
-
 Difference:
 
 ```{r}
 ggplot(df, aes(mom_PI.y - mom_PI.x)) +
   geom_density() +
   labs(x = "Online - Formula", y = "Density", caption = "MoM UtAPI")
+```
+
+Round to three decimals:
+
+```{r}
+ggplot(df, aes(mom_PI.y - round(mom_PI.x, 3))) +
+  geom_density() +
+  labs(x = "Online - Formula", y = "Density", caption = "MoM UtAPI")
+```
+
+```{r}
+ggplot(df, aes((round(mom_PI.x, 3) + mom_PI.y) / 2, mom_PI.y - round(mom_PI.x, 3))) +
+    geom_point() + 
+  labs(x = "Mean", y = "Difference", caption = "MoM UtAPI")
 ```
 
 ### MoM PlGF
@@ -350,6 +370,11 @@ ggplot(df, aes((nrisk_prior.x + nrisk_prior.y) / 2, nrisk_prior.y - nrisk_prior.
   labs(x = "Mean", y = "Difference", caption = "Prior risk")
 ```
 
+```{r}
+ggplot(df, aes((nrisk_prior.x + nrisk_prior.y) / 2, abs(nrisk_prior.y - nrisk_prior.x))) +
+    geom_point() + scale_x_log10() + scale_y_log10() +
+    labs(x = "Mean", y = "Abs. Difference", caption = "Prior risk")
+```
 
 Difference:
 
@@ -377,6 +402,12 @@ Mean vs Difference:
 ggplot(df, aes((nrisk.x + nrisk.y) / 2, nrisk.y - nrisk.x)) +
     geom_point() + scale_x_log10() +
   labs(x = "Mean", y = "Difference", caption = "Risk score")
+```
+
+```{r}
+ggplot(df, aes((nrisk.x + nrisk.y) / 2, abs(nrisk.y - nrisk.x))) +
+    geom_point() + scale_x_log10() + scale_y_log10() +
+    labs(x = "Mean", y = "Abs. Difference", caption = "Risk score")
 ```
 
 Difference:

@@ -1,3 +1,74 @@
+#' Calculate Pre-eclampsia Risk Scores
+#'
+#' @description
+#' Calculates pre-eclampsia risk scores for patient data using either a formula-based
+#' method or by querying an online calculator. The function can process both individual
+#' and batch data, with support for parallel processing for large datasets.
+#'
+#' @param data A data frame containing patient information and measurements
+#' @param id_column Character string specifying the column name containing unique
+#'   identifiers. If not present, sequential IDs will be generated. Default: "id"
+#' @param method Character string specifying the calculation method to use.
+#'   Must be either "formula" or "online". Default: "formula"
+#' @param report_as_text Logical indicating whether to return risk scores as text
+#'   rather than numeric values. Default: FALSE
+#' @param G Numeric value specifying gestational age in weeks. Only used when
+#'   method = "formula". Default: 37
+#' @param save_responses Logical indicating whether to save responses from the online
+#'   calculator. Only applicable when method = "online". Default: FALSE
+#' @param response_dir Character string specifying the directory where responses
+#'   should be saved if save_responses is TRUE. Default: "requests"
+#' @param url Character string specifying the URL of the online calculator.
+#'   Default: "https://fetalmedicine.org/research/assess/preeclampsia/First"
+#' @param verbose Logical indicating whether to display progress messages.
+#'   Default: TRUE
+#' @param parallel Logical indicating whether to use parallel processing. If NA,
+#'   parallel processing will be automatically enabled for datasets with more than
+#'   100 rows. Default: NA
+#'
+#' @return A data frame containing the original data with additional columns:
+#' \itemize{
+#'   \item mom_MAP: Multiple of median for mean arterial pressure
+#'   \item mom_PI: Multiple of median for pulsatility index
+#'   \item mom_PlGF: Multiple of median for PlGF
+#'   \item risk_prior: Prior risk score
+#'   \item risk: Final calculated risk score
+#' }
+#'
+#' @details
+#' The function supports two methods for calculating pre-eclampsia risk:
+#' \enumerate{
+#'   \item Formula-based calculation using local implementation
+#'   \item Online calculation using the Fetal Medicine Foundation calculator
+#' }
+#'
+#' For large datasets (>100 rows), parallel processing is automatically enabled
+#' unless explicitly disabled. The function will use all available cores minus one
+#' for parallel processing.
+#'
+#' @note
+#' This package is NOT intended for clinical use!
+#'
+#' @examples
+#' \dontrun{
+#' # Calculate risk using formula method
+#' results <- calculate_pe_risk(patient_data, method = "formula")
+#'
+#' # Calculate risk using online calculator and save responses
+#' results <- calculate_pe_risk(
+#'   patient_data,
+#'   method = "online",
+#'   save_responses = TRUE,
+#'   response_dir = "pe_responses"
+#' )
+#' }
+#'
+#' @importFrom data.table copy
+#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom doParallel registerDoParallel
+#' @importFrom foreach foreach %dopar%
+#'
+#' @export
 calculate_pe_risk <- function(data,
                               id_column = "id",
                               method = c("formula", "online"),

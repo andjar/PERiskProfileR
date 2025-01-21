@@ -6,6 +6,8 @@
 \usage{
 extract_risk_scores_from_files(
   response_dir = "requests",
+  data = NULL,
+  id_column = "id",
   report_as_text = FALSE
 )
 }

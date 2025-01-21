@@ -4,7 +4,15 @@
 \alias{calculate_formula_risk}
 \title{Calculate Formula-Based Risk}
 \usage{
-calculate_formula_risk(form_data, G = 37, report_as_text = FALSE)
+calculate_formula_risk(
+  form_data,
+  G = 37,
+  report_as_text = FALSE,
+  mom_MAP = NA,
+  mom_PI = NA,
+  mom_PlGF = NA,
+  truncation_of_mom = TRUE
+)
 }
 \arguments{
 \item{form_data}{List containing all required maternal characteristics and measurements}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/calculate_pe_risk.R
 \name{calculate_pe_risk}
 \alias{calculate_pe_risk}
-\title{Calculate Preeclampsia Risk}
+\title{Calculate Pre-eclampsia Risk Scores}
 \usage{
 calculate_pe_risk(
   data,
@@ -13,77 +13,82 @@ calculate_pe_risk(
   save_responses = FALSE,
   response_dir = "requests",
   url = "https://fetalmedicine.org/research/assess/preeclampsia/First",
-  verbose = TRUE
+  verbose = TRUE,
+  parallel = NA
 )
 }
 \arguments{
-\item{data}{Data frame containing patient data with required columns (see Details)}
+\item{data}{A data frame containing patient information and measurements}
 
-\item{id_column}{String, name of column containing patient IDs (default: "id")}
+\item{id_column}{Character string specifying the column name containing unique
+identifiers. If not present, sequential IDs will be generated. Default: "id"}
 
-\item{method}{Character, calculation method: "formula" or "online" (default: "formula")}
+\item{method}{Character string specifying the calculation method to use.
+Must be either "formula" or "online". Default: "formula"}
 
-\item{report_as_text}{Boolean, whether to return risks as text fractions (default: FALSE)}
+\item{report_as_text}{Logical indicating whether to return risk scores as text
+rather than numeric values. Default: FALSE}
 
-\item{G}{Numeric, gestational age cutoff in weeks for risk calculation (default: 37)}
+\item{G}{Numeric value specifying gestational age in weeks. Only used when
+method = "formula". Default: 37}
 
-\item{save_responses}{Boolean, whether to save online calculator responses (default: FALSE)}
+\item{save_responses}{Logical indicating whether to save responses from the online
+calculator. Only applicable when method = "online". Default: FALSE}
 
-\item{response_dir}{String, directory for saving responses (default: "requests")}
+\item{response_dir}{Character string specifying the directory where responses
+should be saved if save_responses is TRUE. Default: "requests"}
 
-\item{url}{String, FMF calculator URL (default: "https://fetalmedicine.org/research/assess/preeclampsia/First")}
+\item{url}{Character string specifying the URL of the online calculator.
+Default: "https://fetalmedicine.org/research/assess/preeclampsia/First"}
 
-\item{verbose}{Boolean, whether to show progress messages (default: TRUE)}
+\item{verbose}{Logical indicating whether to display progress messages.
+Default: TRUE}
+
+\item{parallel}{Logical indicating whether to use parallel processing. If NA,
+parallel processing will be automatically enabled for datasets with more than
+100 rows. Default: NA}
 }
 \value{
-Data frame containing original data plus additional columns:
+A data frame containing the original data with additional columns:
 \itemize{
-\item mom_MAP: Mean Arterial Pressure MoM
-\item mom_PI: Pulsatility Index MoM
-\item mom_PlGF: PlGF MoM
-\item risk_prior: Prior risk based on maternal characteristics
-\item risk: Final risk incorporating biomarkers
+\item mom_MAP: Multiple of median for mean arterial pressure
+\item mom_PI: Multiple of median for pulsatility index
+\item mom_PlGF: Multiple of median for PlGF
+\item risk_prior: Prior risk score
+\item risk: Final calculated risk score
 }
 }
 \description{
-Calculates preeclampsia risk for multiple patients using either a formula-based approach
-or the Fetal Medicine Foundation's online calculator. This function processes multiple
-patient records and returns risk scores along with biomarker MoM values.
+Calculates pre-eclampsia risk scores for patient data using either a formula-based
+method or by querying an online calculator. The function can process both individual
+and batch data, with support for parallel processing for large datasets.
 }
 \details{
-Required input columns are defined by \code{\link{get_expected_columns}}. The function
-supports two calculation methods:
-\itemize{
-\item formula: Uses local implementation of FMF algorithm
-\item online: Submits data to FMF online calculator
+The function supports two methods for calculating pre-eclampsia risk:
+\enumerate{
+\item Formula-based calculation using local implementation
+\item Online calculation using the Fetal Medicine Foundation calculator
 }
 
-For the online method, internet connectivity is required and the function will create
-a response directory if save_responses is TRUE.
+For large datasets (>100 rows), parallel processing is automatically enabled
+unless explicitly disabled. The function will use all available cores minus one
+for parallel processing.
 }
-\section{Warning}{
-
-This package is NOT intended for clinical use. Risk calculations should be verified
-using official clinical tools.
+\note{
+This package is NOT intended for clinical use!
 }
-
 \examples{
 \dontrun{
-# Calculate risks using formula method
+# Calculate risk using formula method
 results <- calculate_pe_risk(patient_data, method = "formula")
 
-# Calculate risks using online calculator and save responses
+# Calculate risk using online calculator and save responses
 results <- calculate_pe_risk(
   patient_data,
   method = "online",
   save_responses = TRUE,
-  response_dir = "calculator_responses"
+  response_dir = "pe_responses"
 )
 }
 
 }
-\seealso{
-\code{\link{calculate_formula_risk}}, \code{\link{calculate_online_risk}}
-}
-\keyword{local}
-\keyword{online}

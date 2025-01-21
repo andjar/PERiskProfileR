@@ -4,7 +4,7 @@
 \alias{get_expected_map}
 \title{Calculate Expected Mean Arterial Pressure}
 \usage{
-get_expected_map(form_data)
+get_expected_map(form_data, truncate = TRUE)
 }
 \arguments{
 \item{form_data}{A list containing:

@@ -4,7 +4,7 @@
 \alias{get_expected_plgf}
 \title{Calculate Expected PlGF Values}
 \usage{
-get_expected_plgf(form_data)
+get_expected_plgf(form_data, truncate = TRUE)
 }
 \arguments{
 \item{form_data}{A list containing the following elements:

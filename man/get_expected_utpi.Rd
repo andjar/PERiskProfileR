@@ -4,7 +4,7 @@
 \alias{get_expected_utpi}
 \title{Calculate Expected Uterine Artery Pulsatility Index}
 \usage{
-get_expected_utpi(form_data)
+get_expected_utpi(form_data, truncate = TRUE)
 }
 \arguments{
 \item{form_data}{A list containing maternal characteristics including:

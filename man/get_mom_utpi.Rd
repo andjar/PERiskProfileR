@@ -4,7 +4,7 @@
 \alias{get_mom_utpi}
 \title{Calculate UtAPI MoM}
 \usage{
-get_mom_utpi(form_data)
+get_mom_utpi(form_data, truncation = TRUE)
 }
 \arguments{
 \item{form_data}{A list containing:

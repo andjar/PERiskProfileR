@@ -252,7 +252,7 @@ row_to_list <- function(row, validate = TRUE) {
     param_list[["biochemical_ga"]] <- param_list[["ga"]]
   }
 
-  if (!is.na(param_list$biophysical_at) && param_list$biochemical_at != "") {
+  if (!is.na(param_list$biophysical_at) && param_list$biophysical_at != "") {
     param_list[["biophysical_ga"]] <- param_list$ga + as.numeric(
       difftime(
         as.Date(param_list$biophysical_at, tryFormats = time_formats_to_guess),

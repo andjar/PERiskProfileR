@@ -8,7 +8,6 @@ reference:
 - title: Prepare data
   desc:  Prepare data for risk calculation
 - contents:
-  - get_demo_data
   - row_to_list
   - get_expected_columns
   - validate_columns
@@ -31,3 +30,8 @@ reference:
   - calculate_online_risk
   - extract_risk_scores_from_file
   - extract_risk_scores_from_files
+- title: Demo and validation
+  desc: Example datasets
+- contents:
+  - get_validation_data
+  - get_demo_data

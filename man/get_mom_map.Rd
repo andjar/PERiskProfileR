@@ -4,7 +4,7 @@
 \alias{get_mom_map}
 \title{Calculate MAP MoM}
 \usage{
-get_mom_map(form_data)
+get_mom_map(form_data, truncation = TRUE)
 }
 \arguments{
 \item{form_data}{A list containing:

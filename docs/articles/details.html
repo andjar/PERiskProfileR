@@ -36,6 +36,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/data_specifications.html">Data Specifications</a></li>
     <li><a class="dropdown-item" href="../articles/details.html">Details</a></li>
+    <li><a class="dropdown-item" href="../articles/validation.html">Validation</a></li>
   </ul>
 </li>
       </ul>
@@ -355,6 +356,11 @@ is the prior risk at week
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>g</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">h(g)</annotation></semantics></math>
 is an adjustment based on MoM of MAP, PlGF and UtAPI (as described
 below).</p>
+<p>Important: In practice, the integral diverged for some inputs when
+the upper limit was
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>∞</mi><annotation encoding="application/x-tex">\infty</annotation></semantics></math>.
+Therefore, I have used upper level <code>1e3</code>. This seems to work
+fine (see validation).</p>
 <p>The adjustment
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>g</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">h(g)</annotation></semantics></math>
 is only calculated from the MoMs (and not other variables) and given by
