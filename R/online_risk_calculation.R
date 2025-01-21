@@ -43,7 +43,7 @@ calculate_online_risk <- function(
   if (httr::status_code(response) == 200) {
     content <- httr::content(response, "text", encoding = "UTF-8")
     if (save_responses == TRUE) {
-      # Generate unique filename based on twins and ga_at
+      # Generate unique filename
       filename <- file.path(response_dir, paste0(row_id, "_", format(Sys.time(), "%Y-%m-%dT%H%M%S"), ".html"))
 
       # Write content to HTML file
@@ -113,44 +113,76 @@ map_to_calculator_form <- function(form_data) {
 #' @keywords internal
 extract_risk_scores <- function(html_content, report_as_text = FALSE) {
 
-  html_content <- rvest::read_html(html_content)
+  # Safely parse HTML
+  tryCatch({
+    html_content <- rvest::read_html(html_content)
+  }, error = function(e) {
+    stop("Failed to parse HTML content: ", e$message)
+  })
+
+  # Helper function to safely extract text using CSS selector
+  safe_extract <- function(selector) {
+    result <- tryCatch({
+      html_content |>
+        rvest::html_nodes(selector) |>
+        rvest::html_text() |>
+        trimws()
+    }, error = function(e) character(0))
+
+    if (length(result) == 0) return(NA_character_)
+    result
+  }
 
   # Extract risk scores using CSS selectors
-  history_risk <- html_content |>
-    rvest::html_nodes(".history table td:nth-child(2)") |>
-    rvest::html_text() |>
-    trimws()
+  # Extract and process risk scores
+  history_risk <- safe_extract(".history table td:nth-child(2)")
+  markers_risk <- safe_extract(".markers table td:nth-child(2)")
 
-  if (report_as_text == FALSE) {
-    history_risk <- text_to_risk(history_risk)
+  if (!is.na(history_risk) && !report_as_text) {
+    history_risk <- tryCatch(
+      text_to_risk(history_risk),
+      error = function(e) NA_real_
+    )
   }
 
-  markers_risk <- html_content |>
-    rvest::html_nodes(".markers table td:nth-child(2)") |>
-    rvest::html_text() |>
-    trimws()
-
-  if (report_as_text == FALSE) {
-    markers_risk <- text_to_risk(markers_risk)
+  if (!is.na(markers_risk) && !report_as_text) {
+    markers_risk <- tryCatch(
+      text_to_risk(markers_risk),
+      error = function(e) NA_real_
+    )
   }
 
-  mom_MAP_string <- html_content |>
-    rvest::html_nodes("#pe-report > div:nth-child(3) > div:nth-child(1)") |>
-    rvest::html_text() |>
-    trimws()
+  # Extract MoM values with safe fallbacks
+  safe_extract_mom <- function(text, pattern, match_index = 1) {  # Added match_index parameter
+    if (is.na(text)) return(NA_real_)
+    matches <- regmatches(text, gregexpr(pattern, text))[[1]]
+    if (length(matches) < match_index) return(NA_real_)
+    as.numeric(gsub(" MoM", "", sub("^\\((.*)\\)$", "\\1", matches[match_index])))
+  }
 
-  matches <- regmatches(mom_MAP_string, gregexpr("\\(([^)]+)\\)", mom_MAP_string))[[1]]
-  capture_1 <- sub("^\\((.*)\\)$", "\\1", matches[1])
-  capture_2 <- sub("^\\((.*)\\)$", "\\1", matches[2])
+  # Extract MAP and PI
+  mom_MAP_string <- safe_extract("#pe-report > div:nth-child(3) > div:nth-child(1)")
+  mom_MAP <- NA_real_
+  mom_PI <- NA_real_
 
-  mom_MAP <- as.numeric(gsub(" MoM", "", capture_1))
-  mom_PI  <- as.numeric(gsub(" MoM", "", capture_2))
+  if (!is.na(mom_MAP_string)) {
+    matches <- regmatches(mom_MAP_string, gregexpr("\\(([^)]+)\\)", mom_MAP_string))[[1]]
+    if (length(matches) >= 1) {
+      mom_MAP <- safe_extract_mom(mom_MAP_string, "\\(([^)]+)\\)", 1)  # First match
+    }
+    if (length(matches) >= 2) {
+      mom_PI <- safe_extract_mom(mom_MAP_string, "\\(([^)]+)\\)", 2)  # Second match
+    }
+  }
 
-  mom_PlGF_string <- html_content |>
-    rvest::html_nodes("#pe-report > div:nth-child(3) > div:nth-child(2)") |>
-    rvest::html_text() |>
-    trimws()
-  mom_PlGF <- as.numeric(sub(".*PLGF\\s*(\\d+\\.\\d+)\\s*MoM.*", "\\1", mom_PlGF_string))
+  # Extract PlGF
+  mom_PlGF_string <- safe_extract("#pe-report > div:nth-child(3) > div:nth-child(2)")
+  mom_PlGF <- NA_real_
+  if (!is.na(mom_PlGF_string)) {
+    mom_PlGF <- tryCatch({
+      as.numeric(sub(".*PLGF\\s*(\\d+\\.\\d+)\\s*MoM.*", "\\1", mom_PlGF_string))
+    }, error = function(e) NA_real_)
+  }
 
   return(list(
     mom_MAP = mom_MAP,
@@ -199,7 +231,7 @@ extract_risk_scores_from_file <- function(html_file, report_as_text = FALSE) {
 #' @importFrom data.table rbindlist data.table
 #' @keywords online
 #' @export
-extract_risk_scores_from_files <- function(response_dir = "requests", report_as_text = FALSE) {
+extract_risk_scores_from_files <- function(response_dir = "requests", data = NULL, id_column = "id", report_as_text = FALSE) {
   files_to_read <- list.files(path = response_dir, pattern = "*.html", full.names = TRUE)
   df <- rbindlist(lapply(files_to_read, function(file_to_read) {
     k <- extract_risk_scores_from_file(file_to_read, report_as_text = report_as_text)
@@ -212,5 +244,16 @@ extract_risk_scores_from_files <- function(response_dir = "requests", report_as_
       risk = k$risk
     )
   }))
-  df
+  if (is.null(data)) {
+    return(df)
+  } else {
+    df_out <- copy(data)
+    df_out[, (id_column) := as.character(get(id_column))]
+    set(df, j = id_column, value = gsub(paste0(response_dir, "/"),"",df$file))
+    df[, (id_column) := tstrsplit(get(id_column), "_", fixed = TRUE)[[1]]]
+    df_out <- merge(df_out, df, by = id_column)
+
+    return(df_out)
+  }
+
 }

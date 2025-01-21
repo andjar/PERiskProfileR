@@ -22,11 +22,13 @@
 #' @return Numeric value representing the expected PlGF value
 #' @keywords local
 #' @export
-get_expected_plgf <- function(form_data) {
+get_expected_plgf <- function(form_data, truncate = TRUE) {
   # Appendix S1 from
   # https://obgyn.onlinelibrary.wiley.com/doi/10.1002/uog.19112
 
-  form_data <- truncate_for_mom(form_data)
+  if (truncate) {
+    form_data <- truncate_for_mom(form_data)
+  }
 
   intercept           <-  0
   intercept_delfia    <-  1.332959332
@@ -142,9 +144,11 @@ get_mom_plgf <- function(form_data, truncation = TRUE) {
 #' @return Numeric value representing the expected UtAPI
 #' @keywords local
 #' @export
-get_expected_utpi <- function(form_data) {
+get_expected_utpi <- function(form_data, truncate = TRUE) {
 
-  form_data <- truncate_for_mom(form_data)
+  if (truncate) {
+    form_data <- truncate_for_mom(form_data)
+  }
 
   intercept    <-  0.264570000
   beta_ga      <- -0.004838365
@@ -224,9 +228,11 @@ get_mom_utpi <- function(form_data, truncation = TRUE) {
 #' @return Numeric value representing the expected MAP
 #' @keywords local
 #' @export
-get_expected_map <- function(form_data) {
+get_expected_map <- function(form_data, truncate = TRUE) {
 
-  form_data <- truncate_for_mom(form_data)
+  if (truncate) {
+    form_data <- truncate_for_mom(form_data)
+  }
 
   intercept    <-                      1.936400000
   beta_ga      <-                      0.000428017
@@ -498,67 +504,71 @@ calculate_formula_risk <- function(form_data, G = 37, report_as_text = FALSE, mo
   if (is.na(mom_MAP)) {
     mom_MAP  <- get_mom_map(form_data)
     result[["mom_MAP"]] <- mom_MAP
-
-    if (truncation_of_mom) {
-      # Truncation
-      # https://doi.org/10.1016/j.ajog.2019.11.1247
-      upper_limit <- 10^0.12240759
-      lower_limit <- 10^-0.1224076
-      if (mom_MAP < lower_limit || mom_MAP > upper_limit) {
-        warning(paste0("The MoM for MAP will be truncated from ", mom_MAP))
-        mom_MAP <- max(mom_MAP, lower_limit)
-        mom_MAP <- min(mom_MAP, upper_limit)
-      }
-    }
-
   } else {
     result[["mom_MAP"]] <- mom_MAP
+  }
+  if (truncation_of_mom & !is.na(mom_MAP)) {
+    # Truncation
+    # https://doi.org/10.1016/j.ajog.2019.11.1247
+    upper_limit <- 10^0.12240759
+    lower_limit <- 10^-0.1224076
+    if (mom_MAP < lower_limit) {
+      warning(paste0("The MoM for MAP will be truncated from ", round(mom_MAP, 2), " to ", round(lower_limit, 2)))
+      mom_MAP <- max(mom_MAP, lower_limit)
+    } else if (mom_MAP > upper_limit) {
+      warning(paste0("The MoM for MAP will be truncated from ", round(mom_MAP, 2), " to ", round(upper_limit, 2)))
+      mom_MAP <- min(mom_MAP, upper_limit)
+    }
   }
 
   if (is.na(mom_PI)) {
     mom_PI   <- get_mom_utpi(form_data)
     result[["mom_PI"]] <- mom_PI
-
-    if (truncation_of_mom) {
-      # Truncation
-      # https://doi.org/10.1016/j.ajog.2019.11.1247
-      upper_limit <- 10^0.42161519
-      lower_limit <- 10^-0.4216152
-      if (mom_PI < lower_limit || mom_PI > upper_limit) {
-        warning(paste0("The MoM for UtAPI will be truncated from ", mom_PI))
-        mom_PI <- max(mom_PI, lower_limit)
-        mom_PI <- min(mom_PI, upper_limit)
-      }
-    }
   } else {
     result[["mom_PI"]] <- mom_PI
+  }
+  if (truncation_of_mom & !is.na(mom_PI)) {
+    # Truncation
+    # https://doi.org/10.1016/j.ajog.2019.11.1247
+    upper_limit <- 10^0.42161519
+    lower_limit <- 10^-0.4216152
+    if (mom_PI < lower_limit) {
+      warning(paste0("The MoM for UtAPI will be truncated from ", round(mom_PI, 2), " to ", round(lower_limit, 2)))
+      mom_PI <- max(mom_PI, lower_limit)
+    } else if (mom_PI > upper_limit) {
+      warning(paste0("The MoM for UtAPI will be truncated from ", round(mom_PI, 2), " to ", round(lower_limit, 2)))
+      mom_PI <- min(mom_PI, upper_limit)
+    }
   }
 
   if (is.na(mom_PlGF)) {
     mom_PlGF <- get_mom_plgf(form_data)
     result[["mom_PlGF"]] <- mom_PlGF
-
-    if (truncation_of_mom) {
-      # Truncation
-      # https://doi.org/10.1016/j.ajog.2019.11.1247
-      upper_limit <- 10^0.56550992
-      lower_limit <- 10^-0.5655099
-      if (mom_PlGF < lower_limit || mom_PlGF > upper_limit) {
-        warning(paste0("The MoM for PlGF will be truncated from ", mom_PlGF))
-        mom_PlGF <- max(mom_PlGF, lower_limit)
-        mom_PlGF <- min(mom_PlGF, upper_limit)
-      }
-    }
   } else {
     result[["mom_PlGF"]] <- mom_PlGF
   }
+  if (truncation_of_mom & !is.na(mom_PlGF)) {
+    # Truncation
+    # https://doi.org/10.1016/j.ajog.2019.11.1247
+    upper_limit <- 10^0.56550992
+    lower_limit <- 10^-0.5655099
+    if (mom_PlGF < lower_limit) {
+      warning(paste0("The MoM for PlGF will be truncated from ", round(mom_PlGF, 2), " to ", round(lower_limit, 2)))
+      mom_PlGF <- max(mom_PlGF, lower_limit)
+    } else if(mom_PlGF > upper_limit) {
+      warning(paste0("The MoM for PlGF will be truncated from ", round(mom_PlGF, 2), " to ", round(upper_limit, 2)))
+      mom_PlGF <- min(mom_PlGF, upper_limit)
+    }
+  }
+
+
   risk_prior <- get_prior(form_data, g = G, pnorm = TRUE)
   risk <- integrate(get_p_prior,
                     lower = 24, upper = G,
                     form_data = form_data,
                     mom_MAP = mom_MAP, mom_PI = mom_PI, mom_PlGF = mom_PlGF
                     )$value / integrate(
-                      get_p_prior, lower = 24, upper = Inf,
+                      get_p_prior, lower = 24, upper = 1e3,
                       form_data = form_data,
                       mom_MAP = mom_MAP, mom_PI = mom_PI, mom_PlGF = mom_PlGF
                       )$value

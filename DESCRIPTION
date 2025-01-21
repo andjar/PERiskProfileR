@@ -14,7 +14,10 @@ Imports:
     ggplot2,
     httr,
     jsonlite,
-    rvest
+    rvest,
+    parallel,
+    doParallel,
+    foreach
 Suggests: 
     knitr,
     rmarkdown

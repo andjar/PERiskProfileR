@@ -104,6 +104,8 @@ $$
 
 where $\tilde{p}(g)$ is the prior risk at week $g$ (as described above), and $h(g)$ is an adjustment based on MoM of MAP, PlGF and UtAPI (as described below).
 
+Important: In practice, the integral diverged for some inputs when the upper limit was $\infty$. Therefore, I have used upper level `1e3`. This seems to work fine (see validation).
+
 The adjustment $h(g)$ is only calculated from the MoMs (and not other variables) and given by the multivariate normal distribution
 
 ```

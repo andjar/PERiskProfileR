@@ -93,6 +93,8 @@ validate_columns <- function(df) {
   expected_cols  <- get_expected_columns()
   actual_cols    <- colnames(df)
 
+  expected_cols <- expected_cols[expected_cols != "previous_ga"]
+
   # Find missing and extra columns
   missing_cols <- setdiff(expected_cols, actual_cols)
   extra_cols   <- setdiff(actual_cols, expected_cols)
@@ -238,7 +240,7 @@ row_to_list <- function(row, validate = TRUE) {
     param_list[["previous_ga"]] <- param_list$previous_ga_weeks + param_list$previous_ga_days / 7
   }
 
-  if (!is.na(param_list$biochemical_at)) {
+  if (!is.na(param_list$biochemical_at) && param_list$biochemical_at != "") {
     param_list[["biochemical_ga"]] <- param_list$ga + as.numeric(
       difftime(
         as.Date(param_list$biochemical_at, tryFormats = time_formats_to_guess),
@@ -246,9 +248,11 @@ row_to_list <- function(row, validate = TRUE) {
         units = "weeks"
       )
     )
+  } else {
+    param_list[["biochemical_ga"]] <- param_list[["ga"]]
   }
 
-  if (!is.na(param_list$biophysical_at)) {
+  if (!is.na(param_list$biophysical_at) && param_list$biochemical_at != "") {
     param_list[["biophysical_ga"]] <- param_list$ga + as.numeric(
       difftime(
         as.Date(param_list$biophysical_at, tryFormats = time_formats_to_guess),
@@ -256,12 +260,24 @@ row_to_list <- function(row, validate = TRUE) {
         units = "weeks"
       )
     )
+  } else {
+    param_list[["biophysical_ga"]] <- param_list[["ga"]]
   }
 
   # check that ga is within limits
   # https://doi.org/10.1016/j.ajog.2019.11.1247
   if (param_list$ga*7 < 77 || param_list$ga*7 > 99) {
     stop("Gestational age outside allowed limits of 77-99 days!")
+  }
+  if (!is.na(param_list$biophysical_at) && param_list$biophysical_at != "") {
+    if (param_list$biophysical_ga*7 < 77 || param_list$biophysical_ga*7 > 99) {
+      stop("Gestational age at biophysical measurement outside allowed limits of 77-99 days!")
+    }
+  }
+  if (!is.na(param_list$biochemical_at) && param_list$biochemical_at != "") {
+    if (param_list$biochemical_ga*7 < 77 || param_list$biochemical_ga*7 > 99) {
+      stop("Gestational age at biochemical measurement outside allowed limits of 77-99 days!")
+    }
   }
 
   # Maternal age at estimated date of delivery (years)
@@ -362,6 +378,9 @@ row_to_list <- function(row, validate = TRUE) {
   if(any(!param_list$include_pappa %in% c("no", "mom", "raw"))) {
     warning("Unknown values found in column for PAPP-A (no, mom, raw)!")
   }
+  if(any(param_list$include_pappa %in% c("mom", "raw"))) {
+    warning("This package has NOT been validated for the use of papp-a!")
+  }
   param_list$include_pappa <- which(param_list$include_pappa == c("no", "mom", "raw")) - 1
   # NB: From 0-2
 
@@ -392,6 +411,18 @@ row_to_list <- function(row, validate = TRUE) {
 
   # Remove NULL values and NA values
   param_list <- param_list[!sapply(param_list, is.null) & !sapply(param_list, is.na)]
+
+  # Need the following to exist for the mom-calculations to work (i.e., must be NA, not NULL)
+  if (!"map" %in% names(param_list)) {
+    param_list$map <- NA
+  }
+  if (!"utpi" %in% names(param_list)) {
+    param_list$utpi <- NA
+  }
+  if (!"plgf" %in% names(param_list)) {
+    param_list$plgf <- NA
+  }
+
 
   return(param_list)
 }
