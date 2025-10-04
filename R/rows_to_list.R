@@ -352,12 +352,18 @@ row_to_list <- function(row, validate = TRUE) {
     warning("Unknown values found in column for SLE!")
   }
   param_list$sle <- ifelse(param_list$sle == "yes", 1, 0)
+  if (param_list$sle != 0) {
+    stop("We currently do not support SLE")
+  }
 
   param_list$aps <- tolower(param_list$aps)
   if(any(!param_list$aps %in% c("yes", "no"))) {
     warning("Unknown values found in column for APS!")
   }
   param_list$aps <- ifelse(param_list$aps == "yes", 1, 0)
+  if (param_list$aps != 0) {
+    stop("We currently do not support SLE")
+  }
 
   param_list$include_plgf <- tolower(param_list$include_plgf)
   if(any(!param_list$include_plgf %in% c("no", "mom", "raw"))) {

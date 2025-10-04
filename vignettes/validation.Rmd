@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 library("PERiskProfileR")
 library("data.table")
 library("ggplot2")
+library("blandr")
 
 theme_set(theme_bw())
 ```
@@ -198,6 +199,12 @@ remove(k)
 
 Finally, we acquire risk scores using the online calculator:
 
+::: {.callout-important}
+## Online calculator has been updated
+
+The online calculator was updated in July 2025 and the underlying models modified. The online part of this package needs significant changes to support the new version of the online calculator.
+:::
+
 ```{r}
 #| eval: false
 
@@ -230,8 +237,15 @@ df <- merge(
 
 The validation data are attached with pre-calculated risk scores and can be loaded with the function `get_validation_data()`:
 
+::: {.callout-important}
+## SLE and APS no longer supported
+
+The original online calculator was inconsistent for pregnancies with SLE and/or APS - it only increased risk when both were present while it should have been enough with only one of them. Since this is a rare, high-risk group that should be handled by specialists, we no longer have it in the calculator.
+:::
+
 ```{r}
 df <- get_validation_data()
+df <- df[sle == "no" & aps == "no"]
 
 df[, risk.x := as.numeric(gsub("1 in ", "", risk.x))]
 df[, risk.y := as.numeric(gsub("1 in ", "", risk.y))]
@@ -258,15 +272,31 @@ ggplot(df, aes((mom_MAP.x + mom_MAP.y) / 2, mom_MAP.y - mom_MAP.x)) +
   labs(x = "Mean", y = "Difference", caption = "MoM MAP")
 ```
 
-Difference:
+Bland Altman plot:
 
 ```{r}
-ggplot(df, aes(mom_MAP.y - mom_MAP.x)) +
-  geom_density() +
-  labs(x = "Online - Formula", y = "Density", caption = "MoM MAP")
+blandr.draw(df$mom_MAP.x , df$mom_MAP.y)
 ```
 
-Note that the difference becomes even smaller if we round the formula-based values to three decimals:
+The systematic error seems to be isolated to cases with chronic hypertension:
+
+```{r}
+ggplot(df, aes((mom_MAP.x + mom_MAP.y) / 2, mom_MAP.y - mom_MAP.x, color = chronic_hypertension)) +
+    geom_point() + 
+  labs(x = "Mean", y = "Difference", caption = "MoM MAP") +
+  theme(legend.position = "bottom")
+```
+
+And, looknig at only cases with chronic hypertension, cases with weight > 131 kg:
+
+```{r}
+ggplot(df[chronic_hypertension == "yes"], aes((mom_MAP.x + mom_MAP.y) / 2, mom_MAP.y - mom_MAP.x, color = weight > 131)) +
+    geom_point() + 
+  labs(x = "Mean", y = "Difference", caption = "MoM MAP") +
+  theme(legend.position = "bottom")
+```
+
+Also note that the difference becomes even smaller if we round the formula-based values to three decimals:
 
 ```{r}
 ggplot(df, aes((round(mom_MAP.x, 3) + mom_MAP.y) / 2, mom_MAP.y - round(mom_MAP.x, 3))) +
@@ -298,6 +328,14 @@ Mean vs Difference:
 ggplot(df, aes((mom_PI.x + mom_PI.y) / 2, mom_PI.y - mom_PI.x)) +
     geom_point() + 
   labs(x = "Mean", y = "Difference", caption = "MoM UtAPI")
+```
+
+Please note that while the difference is systematic, it is very small (about 0.001).
+
+Bland Altman plot:
+
+```{r}
+blandr.draw(df$mom_PI.x , df$mom_PI.y)
 ```
 
 Difference:
@@ -341,6 +379,18 @@ ggplot(df, aes((mom_PlGF.x + mom_PlGF.y) / 2, mom_PlGF.y - mom_PlGF.x)) +
   labs(x = "Mean", y = "Difference", caption = "MoM PlGF")
 ```
 
+Bland Altman plot:
+
+```{r}
+blandr.draw(df$mom_PlGF.x , df$mom_PlGF.y)
+```
+
+Some of the difference seems to be related to weight:
+
+```{r}
+ggplot(df, aes(weight, mom_PlGF.y - mom_PlGF.x)) +    geom_point() + labs(x = "Weight [kg]", y = "Difference", caption = "MoM PlGF")
+```
+
 
 Difference:
 
@@ -370,10 +420,28 @@ ggplot(df, aes((nrisk_prior.x + nrisk_prior.y) / 2, nrisk_prior.y - nrisk_prior.
   labs(x = "Mean", y = "Difference", caption = "Prior risk")
 ```
 
+Note that the largest difference is seen for those with previous PE:
+
+```{r}
+ggplot(df, aes(
+    (nrisk_prior.x + nrisk_prior.y) / 2,
+    nrisk_prior.y - nrisk_prior.x,
+    color = previous_pe)) +
+    geom_point() + scale_x_log10() +
+    labs(x = "Mean", y = "Difference", caption = "Prior risk")
+```
+
+
 ```{r}
 ggplot(df, aes((nrisk_prior.x + nrisk_prior.y) / 2, abs(nrisk_prior.y - nrisk_prior.x))) +
     geom_point() + scale_x_log10() + scale_y_log10() +
     labs(x = "Mean", y = "Abs. Difference", caption = "Prior risk")
+```
+
+Bland Altman plot:
+
+```{r}
+blandr.draw(df$nrisk_prior.x , df$nrisk_prior.y)
 ```
 
 Difference:
@@ -408,6 +476,12 @@ ggplot(df, aes((nrisk.x + nrisk.y) / 2, nrisk.y - nrisk.x)) +
 ggplot(df, aes((nrisk.x + nrisk.y) / 2, abs(nrisk.y - nrisk.x))) +
     geom_point() + scale_x_log10() + scale_y_log10() +
     labs(x = "Mean", y = "Abs. Difference", caption = "Risk score")
+```
+
+Bland Altman plot:
+
+```{r}
+blandr.draw(df$nrisk.x , df$nrisk.y)
 ```
 
 Difference:

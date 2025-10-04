@@ -32,6 +32,8 @@ calculate_online_risk <- function(
 
 ) {
 
+  stop("Sorry, the online FMF calculator has been changed")
+
   # Send POST request
   response <- httr::POST(
     url,

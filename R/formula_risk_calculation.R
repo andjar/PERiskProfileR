@@ -324,7 +324,7 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
   beta_afro_caribbean       <- -2.6786
   beta_south_asian          <- -1.129
   beta_chronic_hypertension <- -7.2897
-  beta_SLE_APS              <- -3.0519
+  # beta_SLE_APS              <- -3.0519
   beta_in_vitro             <- -1.6327
 
   beta_weight               <- -0.0694096
@@ -339,7 +339,7 @@ get_prior <- function(form_data, g = 37, pnorm = FALSE){
     ifelse(form_data$race == 2, beta_afro_caribbean, 0) +
     ifelse(form_data$race == 3, beta_south_asian, 0) +
     ifelse(form_data$chronic_hypertension == 1, beta_chronic_hypertension, 0) +
-    ifelse(form_data$sle == 1 && form_data$aps == 1, beta_SLE_APS, 0) +
+    # ifelse(form_data$sle == 1 || form_data$aps == 1, beta_SLE_APS, 0) +
     ifelse(form_data$conception == 3, beta_in_vitro, 0)
 
   if (form_data$previous == 1) {
@@ -628,4 +628,17 @@ truncate_for_risk <- function(form_data) {
   }
 
   return(form_data)
+}
+
+#' Convert crl to gestational age
+#'
+#' @description
+#' Returns gestational age from CRL
+#'
+#' @return Gestational age in weeks
+#'
+#' @keywords prepare
+#' @export
+crl_to_ga <- function(crl) {
+
 }
