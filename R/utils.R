@@ -4,6 +4,7 @@ text_to_risk <- function(txt) {
 }
 
 risk_to_text <- function(risk) {
+  if ( is.infinite(risk) ) risk <- 1/10000
   txt <- paste0("1 in ", round(1/round(risk, 4)))
   return(txt)
 }

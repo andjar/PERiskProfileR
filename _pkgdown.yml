@@ -1,37 +1,4 @@
 url: https://andjar.github.io/PERiskProfileR/
 template:
   bootstrap: 5
-  bootswatch: yeti
 
-
-reference:
-- title: Prepare data
-  desc:  Prepare data for risk calculation
-- contents:
-  - row_to_list
-  - get_expected_columns
-  - validate_columns
-- title: Local risk calculation
-  desc:  Get risk scores by local calculations
-- contents:
-  - calculate_pe_risk
-  - calculate_formula_risk
-  - get_expected_plgf
-  - get_mom_plgf
-  - get_expected_utpi
-  - get_mom_utpi
-  - get_expected_map
-  - get_mom_map
-  - get_prior
-- title: Online risk calculation
-  desc:  Get risk scores from the online FMF calculator
-- contents:
-  - calculate_pe_risk
-  - calculate_online_risk
-  - extract_risk_scores_from_file
-  - extract_risk_scores_from_files
-- title: Demo and validation
-  desc: Example datasets
-- contents:
-  - get_validation_data
-  - get_demo_data

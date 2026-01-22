@@ -1,24 +1,18 @@
 Package: PERiskProfileR
-Title: Calculate Preeclampsia Risk Scores in First Trimester
+Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
-Authors@R: 
-    person("Anders Hagen", "Jarmund", , "anders.h.jarmund@ntnu.no", role = c("aut", "cre"),
-           comment = c(ORCID = "0000-0002-3923-1637"))
-Description: This package is based on the published Fetal Medicine Foundation (FMF) Risk Calculator for preeclampsia, based on first trimester parameters. Risk scores can be calculated either locally or by automatically submitting data to the web form.
+Authors@R: c(
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre")),
+    person(, role = "ctb")
+  )
+Description: What the package does (one paragraph).
 License: GPL (>= 3)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports: 
+    checkmate,
     data.table,
-    ggplot2,
-    httr,
-    jsonlite,
-    rvest,
-    parallel,
-    doParallel,
-    foreach
-Suggests: 
-    knitr,
-    rmarkdown
-VignetteBuilder: knitr
+    R6,
+    pbapply
+URL: https://andjar.github.io/PERiskProfileR/
