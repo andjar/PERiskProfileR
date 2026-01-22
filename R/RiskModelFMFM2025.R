@@ -93,7 +93,7 @@ RiskModelFMFM2025 <- R6::R6Class(
       assertNumber(pregnancy$get("biophysical_ga")*7, na.ok = TRUE, null.ok = TRUE, lower = 56, upper = 99, .var.name = "Gestational age at biophysical examination in days")
       assertNumber(pregnancy$get("biochemical_ga")*7, na.ok = TRUE, null.ok = TRUE, lower = 56, upper = 99, .var.name = "Gestational age at biochemical examination in days")
 
-      assertNumber(params$map,  na.ok = FALSE, .var.name = "Provided MAP measurements")
+      assertNumber(pregnancy$get("map"),  na.ok = FALSE, .var.name = "Provided MAP measurements")
     },
 
     #' @description Inherits CRL conversion from \code{RiskModel}.

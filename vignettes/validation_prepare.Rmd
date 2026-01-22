@@ -1,0 +1,240 @@
+---
+title: "Prepare validation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Prepare validation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(PERiskProfileR)
+```
+
+## Generation of validation cohort
+
+Please note: The validation data are attached with pre-calculated risk scores and can be loaded with the function `get_validation_data()`
+
+To ensure correspondence between values calculated offline and online, a validation data set of 5000 women was generated to cover a wide range of possible combinations:
+
+```{r}
+#| eval: false
+
+# Function to generate random samples from a parameter space
+sample_parameter_space <- function(parameter_ranges, n_samples = 2500) {
+  # parameter_ranges should be a list where each element is either:
+  # - a vector of discrete values to sample from
+  # - a numeric vector of length 2 specifying [min, max] for continuous variables
+
+  # Initialize result dataframe
+  result <- data.frame(matrix(nrow = n_samples, ncol = length(parameter_ranges)))
+  names(result) <- names(parameter_ranges)
+
+  # Sample each parameter
+  for (param_name in names(parameter_ranges)) {
+    param_range <- parameter_ranges[[param_name]]
+
+    if (length(param_range) == 2 && is.numeric(param_range)) {
+      # Continuous parameter: sample uniformly between min and max
+      result[[param_name]] <- runif(n_samples, min = param_range[1], max = param_range[2])
+    } else {
+      # Discrete parameter: sample with replacement from provided values
+      result[[param_name]] <- sample(param_range, n_samples, replace = TRUE)
+    }
+  }
+
+  return(result)
+}
+
+parameter_ranges <- list(
+  # Pregnancy Details
+  twins = "no",
+  crl1 = NA,
+  crl2 = NA,
+  crl = 50,
+  ga = c(11.3, 14),
+  ga_at = "01-01-2024",
+
+  # Maternal Characteristics
+  dob = paste0("01-01-", seq(1985, 2006)),
+  height = c(150, 190),
+  weight = c(40, 180),
+  race = c(1, 2, 3, 4, 5),
+  smoking = c("yes", "no", "no"),
+  mother_pe = c("yes", "no", "no"),
+  conception = c(1, 1, 1, 1, 2, 3),
+
+  # Medical History
+  chronic_hypertension = c("yes", "no", "no", "no", "no"),
+  diabetes_type_i = c("yes", "no", "no", "no", "no"),
+  diabetes_type_ii = c("yes", "no", "no", "no", "no"),
+  diabetes_drugs = c("diet only", "insulin", "insulin+metformin", "metformin"),
+  sle = c("yes", "no", "no", "no", "no", "no", "no", "no", "no", "no"),
+  aps = c("yes", "no", "no", "no", "no", "no", "no", "no", "no", "no"),
+
+  # Obstetric History
+  previous = "no",
+  previous_pe = NA,
+  previous_delivered_at = NA,
+  previous_ga_weeks     = NA,
+  previous_ga_days      = NA,
+  previous_interval     = NA,
+
+  # Biophysical Measurements
+  map = c(60, 100),
+  utpi = c(0.8, 3),
+  biophysical_at = "01-01-2024",
+
+  # Biochemical Measurements
+  include_plgf = "raw",
+  include_pappa = "no",
+  plgf_mom = NA,
+  plgf = c(10, 80),
+  plgf_machine = c("delfia", "kryptor", "roche"),
+  pappa_mom = NA,
+  pappa = NA,
+  pappa_machine = NA,
+  biochemical_at = "01-01-2024"
+)
+
+
+# Generate 2250 random parameter combinations, primipara
+samples <- data.table(sample_parameter_space(parameter_ranges, n_samples = 2250))
+
+# Generate 500 random parameter combinations, primipara, custom MoM-PlGF
+parameter_ranges$include_plgf <- "mom"
+parameter_ranges$plgf <- NA
+parameter_ranges$plgf_machine <- NA
+parameter_ranges$plgf_mom <- c(0.5, 2.5)
+
+samples <- rbind(samples,
+                 data.table(sample_parameter_space(parameter_ranges, n_samples = 500)))
+
+# Generate 2250 random parameter combinations, multipara
+parameter_ranges$include_plgf <- "raw"
+parameter_ranges$plgf <- c(10, 80)
+parameter_ranges$plgf_machine <- c("delfia", "kryptor", "roche")
+parameter_ranges$plgf_mom <- NA
+
+parameter_ranges$previous <- "yes"
+parameter_ranges$previous_pe <- c("yes", "no", "no")
+parameter_ranges$previous_delivered_at <- paste0("01-01-", seq(2000, 2023))
+parameter_ranges$previous_ga_weeks     <- seq(24, 41)
+parameter_ranges$previous_ga_days      <- seq(0, 6)
+
+samples <- rbind(samples,
+                 data.table(sample_parameter_space(parameter_ranges, n_samples = 2250)))
+
+# Add ID column
+samples[, id := .I]
+
+# Adjust parameters
+samples[, crl := 50]
+samples[diabetes_type_i == "yes", diabetes_type_ii := "no"]
+samples[diabetes_type_ii == "no", diabetes_drugs := "no"]
+samples <- samples[sample(seq(1, nrow(samples)), nrow(samples))]
+
+# Remove either PlGF, MAP or UtAPI from a subsample, n = 1000
+rows_to_select_from <- samples[include_plgf == "raw", id]
+selected_rows <- sample(rows_to_select_from, 1000)
+
+for (i in selected_rows) {
+  remove_measurement <- sample(c("MAP", "UtAPI", "PlGF"), 1)
+  if (remove_measurement == "MAP") {
+    samples[id == i, map := NA]
+  }
+  if (remove_measurement == "UtAPI") {
+    samples[id == i, utpi := NA]
+  }
+  if (remove_measurement == "PlGF") {
+    samples[id == i, plgf := NA]
+    samples[id == i, include_plgf := "no"]
+    samples[id == i, plgf_machine := NA]
+    samples[id == i, biochemical_at := NA]
+  }
+}
+
+# Introduce a few days delay in one of the dates, n = 500 for each
+rows_to_select_from <- samples[!is.na(biochemical_at) & ga > 12 & ga < 13, id]
+selected_rows <- sample(rows_to_select_from, 500)
+for (i in selected_rows) {
+  samples[id == i, biochemical_at := paste0(sample(seq(25, 31), 1), "-12-2023")]
+}
+
+rows_to_select_from <- samples[!is.na(biophysical_at) & ga > 12 & ga < 13, id]
+selected_rows <- sample(rows_to_select_from, 500)
+for (i in selected_rows) {
+  samples[id == i, biophysical_at := paste0(sample(seq(25, 31), 1), "-12-2023")]
+}
+
+fwrite(samples, file = "data_validation.csv")
+remove(samples)
+```
+
+## Analytical risk scores
+
+### FMF2023 model
+
+```{r}
+#| eval: false
+
+df <- fread("data_validation.csv") # or `df <- get_demo_data()`
+
+# In this simplified version, SLE and APS are no longer supported, and input validation is stricter
+# We must adapt the dataset accordingly
+df[(diabetes_type_i == "yes" | diabetes_type_ii == "yes") & diabetes_drugs == "no", diabetes_drugs := "diet"]
+df <- df[aps == "no" & sle == "no"]
+
+# Calculate risk
+k <- calculate_risk(
+  df,
+  model = "FMF2023",
+  as_list = FALSE,
+  G = 37)
+fwrite(k, file = "data_validation_analytical_FMF2023.csv")
+remove(k)
+```
+
+### FMF2025 model
+
+```{r}
+#| eval: false
+
+df <- fread("data_validation.csv") # or `df <- get_demo_data()`
+
+# In this simplified version, SLE and APS are no longer supported, and input validation is stricter.
+# In addition, the online calculator no longer supports separate date for biophysical examination.
+# Also, MAP is now required (cannor be NA)
+# We must adapt the dataset accordingly
+df[(diabetes_type_i == "yes" | diabetes_type_ii == "yes") & diabetes_drugs == "no", diabetes_drugs := "diet"]
+df <- df[aps == "no" & sle == "no"]
+df <- df[ga_at == biophysical_at]
+df <- df[!is.na(map)]
+
+# Calculate risk
+k <- calculate_risk(
+  df,
+  model = "FMF2025",
+  as_list = FALSE,
+  G = 37)
+fwrite(k, file = "data_validation_analytical_FMF2025.csv")
+remove(k)
+```
+
+## Online calculations
+
+### FMF2023 model
+
+The FMF2023 version is no longer available. 
+
+### FMF2025 model
+
+The FMF2025 version is available online at: https://fmf.refractionx.com/calculators?embed=false&bigpicture=true&id=preeclampsia
+

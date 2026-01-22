@@ -16,3 +16,7 @@ Imports:
     R6,
     pbapply
 URL: https://andjar.github.io/PERiskProfileR/
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
