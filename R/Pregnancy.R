@@ -1,8 +1,54 @@
+#' Pregnancy Class
+#'
+#' @description
+#' An R6 class representing a single pregnancy. It stores maternal characteristics,
+#' biophysical markers, and biochemical markers, providing a unified interface
+#' for preeclampsia risk calculation.
+#'
+#' @field params A named list containing all clinical parameters and calculated results.
+#' @field risk_model An R6 object of class \code{\link{RiskModel}} used for calculations.
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{initialize(params = list(), risk_model = RiskModelFMFM2023$new())}}{
+#'     Constructor for the Pregnancy class. Performs extensive validation on
+#'     maternal data, dates, and biomarkers. It automatically calculates
+#'     gestational age, maternal age at EDD, expected biomarker values, and
+#'     risk scores upon initialization.
+#'   }
+#'   \item{\code{get(param, truncate_for = "")}}{
+#'     Retrieves a parameter value. If \code{truncate_for} is specified (e.g., "risk"),
+#'     it returns the value truncated according to the model's limits.
+#'   }
+#'   \item{\code{get_raw(param)}}{
+#'     Retrieves the raw, untruncated value of a parameter.
+#'   }
+#'   \item{\code{as_df()}}{
+#'     Converts the stored parameters and results into a single-row \code{data.table}.
+#'   }
+#' }
+#'
+#' @export
 Pregnancy <- R6::R6Class(
   classname = "Pregnancy",
   public = list(
     params = NULL,
     risk_model = NULL,
+
+    #' @description Create a new Pregnancy object.
+    #' @param params A list containing clinical data. Expected keys include:
+    #' \itemize{
+    #'   \item \code{crl} or \code{ga}: Crown-rump length (mm) or gestational age (weeks).
+    #'   \item \code{ga_at}: Date of dating ultrasound (YYYY-MM-DD).
+    #'   \item \code{date_of_birth}: Mother's date of birth (YYYY-MM-DD).
+    #'   \item \code{height}, \code{weight}: Maternal height (cm) and weight (kg).
+    #'   \item \code{race}: "white", "afro-caribbean", "south-asian", "east-asian", or "mixed".
+    #'   \item \code{smoking}, \code{mother_pe}, \code{chronic_hypertension}: "yes" or "no".
+    #'   \item \code{conception}: "spontaneous", "ovulation drugs", or "ivf".
+    #'   \item \code{map}, \code{utpi}, \code{plgf}: Raw biomarker values.
+    #'   \item \code{plgf_machine}: "delfia", "kryptor", or "roche".
+    #' }
+    #' @param risk_model A \code{RiskModel} object (defaults to \code{RiskModelFMFM2023}).
     initialize = function(
 
         params = list(),
@@ -92,10 +138,6 @@ Pregnancy <- R6::R6Class(
       # Biophysical Measurements
       assertNumber(params$map,  na.ok = TRUE)
       assertNumber(params$mom_map,  na.ok = TRUE)
-
-      if ( risk_model$model_name == "RiskModelFMFM2025" ) {
-        assertNumber(params$map,  na.ok = FALSE)
-      }
 
       assertNumber(params$utpi, na.ok = TRUE)
       assertNumber(params$mom_utpi, na.ok = TRUE)
@@ -206,6 +248,10 @@ Pregnancy <- R6::R6Class(
 
     },
 
+    #' @description Get a parameter value, optionally truncated.
+    #' @param param Character string of the parameter name.
+    #' @param truncate_for Character string indicating the truncation context (e.g., "risk").
+    #' @return The numeric or character value of the parameter.
     get = function(param, truncate_for = "") {
 
       if (!param %in% names(self$params)) {
@@ -228,7 +274,12 @@ Pregnancy <- R6::R6Class(
       }
     },
 
+    #' @description Get raw parameter value.
+    #' @param param Character string of the parameter name.
     get_raw = function(param) self$params[[param]],
+
+    #' @description Export pregnancy data as a data table.
+    #' @return A \code{data.table} object.
     as_df = function() as.data.table(self$params)
 
   )

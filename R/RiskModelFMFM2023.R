@@ -1,3 +1,69 @@
+#' FMF 2023 Risk Model Class
+#'
+#' @description
+#' An R6 class implementing the competitive risk model for preeclampsia
+#' developed by the Fetal Medicine Foundation (FMF). This model utilizes
+#' maternal factors, biophysical markers (MAP, UtPI), and biochemical
+#' markers (PlGF) to estimate the probability of delivery with preeclampsia
+#' before a specified gestational age.
+#'
+#' @details
+#' The model is based on the algorithm described in:
+#' \href{https://doi.org/10.1016/j.ajog.2019.11.1247}{Tan et al. (2019)}.
+#' It calculates risk by combining a prior distribution (based on maternal
+#' characteristics) with the likelihood of biomarker Multiples of the
+#' Median (MoMs).
+#'
+#' @super RiskModel
+#'
+#' @field model_name Character. Always "RiskModelFMFM2023".
+#' @field truncations A nested list containing the lower and upper limits
+#'   for clinical parameters (weight, height, age, etc.) used in different
+#'   stages of calculation ("mom", "prior_risk", "risk").
+#'
+#' @section Methods:
+#' \describe{
+#'   \item{\code{initialize(G = 37)}}{
+#'     Constructor. Sets the target gestational age for risk assessment.
+#'   }
+#'   \item{\code{truncate(pregnancy, param, truncate_for)}}{
+#'     Limits the value of a parameter to the predefined range stored in
+#'     \code{self$truncations}.
+#'   }
+#'   \item{\code{validate(pregnancy)}}{
+#'     Ensures that the gestational age at the time of screening and biomarker
+#'     collection falls within the valid model range (77 to 99 days).
+#'   }
+#'   \item{\code{get_ga_from_crl(crl = NA)}}{
+#'     Calculates gestational age in weeks from Crown-Rump Length (mm)
+#'     using the FMF standard formula.
+#'   }
+#'   \item{\code{get_expected_map(pregnancy)}}{
+#'     Calculates the expected Mean Arterial Pressure (MAP) using a
+#'     multiple regression model accounting for maternal traits.
+#'   }
+#'   \item{\code{get_expected_plgf(pregnancy)}}{
+#'     Calculates the expected Placental Growth Factor (PlGF) based on
+#'     maternal characteristics and the specific analyzer used (Delfia,
+#'     Kryptor, or Roche).
+#'   }
+#'   \item{\code{get_expected_utpi(pregnancy)}}{
+#'     Calculates the expected Uterine Artery Pulsatility Index (UtPI)
+#'     MoM based on maternal characteristics.
+#'   }
+#'   \item{\code{get_prior_risk(pregnancy, g = 37, pnorm = FALSE)}}{
+#'     Computes the prior risk distribution of delivering with preeclampsia
+#'     based on the maternal "heart failure" model of PE.
+#'   }
+#'   \item{\code{get_risk(pregnancy, G = 37)}}{
+#'     Calculates the final posterior risk. This method performs numerical
+#'     integration of the joint probability of biomarkers and prior risk
+#'     distributions.
+#'   }
+#' }
+#'
+#' @importFrom emdbook dmvnorm
+#' @export
 RiskModelFMFM2023 <- R6::R6Class(
   classname = "RiskModelFMFM2023",
   inherit = RiskModel,
@@ -27,19 +93,33 @@ RiskModelFMFM2023 <- R6::R6Class(
       )
       # Source: https://doi.org/10.1016/j.ajog.2019.11.1247
     ),
+
+    #' @description Initialize the FMF 2023 model.
+    #' @param G Target gestational age (default 37).
     initialize = function(G = 37) {
       self$G = G
     },
+
+    #' @description Truncate clinical values based on model limits.
+    #' @param pregnancy A \code{Pregnancy} object.
+    #' @param param Parameter name.
+    #' @param truncate_for Context ("mom", "prior_risk", or "risk").
     truncate = function(pregnancy, param, truncate_for) {
       limits <- self$truncations[[truncate_for]][[param]]
       value <- pregnancy$get_raw(param)
       return(pmax(limits[1], pmin(value, limits[2])))
     },
+
+    #' @description Specific validation for the 2023 model (GA 77-99 days).
+    #' @inheritParams RiskModel
     validate = function(pregnancy) {
       assertNumber(pregnancy$get("ga")*7, lower = 77, upper = 99, .var.name = "Gestational age in days")
       assertNumber(pregnancy$get("biophysical_ga")*7, na.ok = TRUE, null.ok = TRUE, lower = 77, upper = 99, .var.name = "Gestational age at biophysical examination in days")
       assertNumber(pregnancy$get("biochemical_ga")*7, na.ok = TRUE, null.ok = TRUE, lower = 77, upper = 99, .var.name = "Gestational age at biochemical examination in days")
     },
+
+    #' @description Inherits CRL conversion from \code{RiskModel}.
+    #' @inheritParams RiskModel
     get_ga_from_crl = function(crl = NA) {
       if ( is.na(pregnancy$get("crl")) || is.na(crl) ) {
         stop("CRL not provided.")
@@ -47,9 +127,12 @@ RiskModelFMFM2023 <- R6::R6Class(
       if ( is.na(crl) ) {
         crl <- pregnancy$get("crl")
       }
-      ga <- 23.53 + 8.052 * sqrt(1.037*crl)
+      ga <- 23.73 + 8.052 * sqrt(1.037*crl)
       return(ga)
     },
+
+    #' @description Refined MAP calculation for 2023.
+    #' @inheritParams RiskModel
     get_expected_map = function(pregnancy) {
       intercept    <-                      1.936400000
       beta_ga      <-                      0.000428017
@@ -102,6 +185,9 @@ RiskModelFMFM2023 <- R6::R6Class(
 
       return(10^mom)
     },
+
+    #' @description Refined PlGF calculation for 2023.
+    #' @inheritParams RiskModel
     get_expected_plgf = function(pregnancy) {
       intercept           <-  0
       intercept_delfia    <-  1.332959332
@@ -181,6 +267,9 @@ RiskModelFMFM2023 <- R6::R6Class(
 
       return(10^mom)
     },
+
+    #' @description Refined UtPI calculation for 2023.
+    #' @inheritParams RiskModel
     get_expected_utpi = function(pregnancy) {
       intercept           <-  0.264570000
       beta_ga             <- -0.004838365
@@ -227,6 +316,9 @@ RiskModelFMFM2023 <- R6::R6Class(
 
       return(10^mom)
     },
+
+    #' @description Refined prior risk calculation for 2023.
+    #' @inheritParams RiskModel
     get_prior_risk = function(pregnancy, g = 37, pnorm = FALSE) {
 
       intercept <- 54.3637
@@ -292,6 +384,9 @@ RiskModelFMFM2023 <- R6::R6Class(
 
       return(r)
     },
+
+    #' @description Refined risk calculation for 2023.
+    #' @inheritParams RiskModel
     get_risk = function(pregnancy, G = 37) {
 
       get_mus <- function(mom_MAP, mom_PI, mom_PlGF, x) {

@@ -1,6 +1,14 @@
 #' @keywords internal
 "_PACKAGE"
 
+#' @details
+#' \section{Medical Disclaimer}{
+#' The risk calculations provided by this package are for research and
+#' educational purposes only. This tool should not be used to guide
+#' clinical management of patients. The developers do not guarantee
+#' the accuracy of the risk scores compared to official FMF tools.
+#' }
+
 ## usethis namespace: start
 #' @importFrom R6 R6Class
 #' @importFrom checkmate assertChoice

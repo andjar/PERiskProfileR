@@ -4,12 +4,24 @@
 \name{PERiskProfileR-package}
 \alias{PERiskProfileR}
 \alias{PERiskProfileR-package}
-\title{PERiskProfileR: Calculate Preeclampsia Risk Scores in First Trimester}
+\title{PERiskProfileR: What the Package Does (One Line, Title Case)}
 \description{
-This package is based on the published Fetal Medicine Foundation (FMF) Risk Calculator for preeclampsia, based on first trimester parameters. Risk scores can be calculated either locally or by automatically submitting data to the web form.
+What the package does (one paragraph).
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://andjar.github.io/PERiskProfileR/}
+}
+
 }
 \author{
-\strong{Maintainer}: Anders Hagen Jarmund \email{anders.h.jarmund@ntnu.no} (\href{https://orcid.org/0000-0002-3923-1637}{ORCID})
+\strong{Maintainer}: First Last \email{first.last@example.com}
+
+Other contributors:
+\itemize{
+  \item  [contributor]
+}
 
 }
 \keyword{internal}

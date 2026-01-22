@@ -1,8 +1,33 @@
-# Based on
-# - UI 1.0.19
-# - API 1.0.0
-# - Models main/0.0.1
-
+#' FMF 2025 Risk Model Class
+#'
+#' @description
+#' An R6 class implementing the updated 2025 competitive risk model for
+#' preeclampsia. This model expands upon the 2023
+#' version by supporting earlier screening (from 8 weeks) and incorporating
+#' refined biomarker coefficients.
+#'
+#' @inherit RiskModel
+#' @inheritSection RiskModel Methods
+#'
+#' @details
+#' This implementation is based on FMF Models main/0.0.1 and supports
+#' biochemical and biophysical screening between 56 and 99 days of
+#' gestation.
+#'
+#' Key differences from the 2023 model include:
+#' \itemize{
+#'   \item \strong{Earlier Screening:} Valid GA range is 56–99 days.
+#'   \item \strong{Refined PlGF Logic:} Includes a cubic term for GA and
+#'     incorporates maternal height into the expected PlGF calculation.
+#'   \item \strong{Early PlGF Handling:} If PlGF is measured before 12 weeks
+#'     and exceeds a specific threshold, it is treated as \code{NA} to
+#'     prevent over-estimation of risk.
+#' }
+#'
+#' @field truncations A nested list of clinical limits. Note that the 2025
+#'   model uses separate truncation lists for each biomarker (MAP, UtPI, PlGF).
+#'
+#' @export
 RiskModelFMFM2025 <- R6::R6Class(
   classname = "RiskModelFMFM2025",
   inherit = RiskModel,
@@ -44,19 +69,35 @@ RiskModelFMFM2025 <- R6::R6Class(
       )
       # Source: https://doi.org/10.1016/j.ajog.2019.11.1247
     ),
+
+    #' @description Inherited from RiskModel.
+    #' @param G Target gestational age (default 37).
     initialize = function(G = 37) {
       self$G = G
     },
+
+    #' @description Truncate clinical values based on model limits.
+    #' @param pregnancy A \code{Pregnancy} object.
+    #' @param param Parameter name.
+    #' @param truncate_for Context ("mom", "prior_risk", or "risk").
     truncate = function(pregnancy, param, truncate_for) {
       limits <- self$truncations[[truncate_for]][[param]]
       value <- pregnancy$get_raw(param)
       return(pmax(limits[1], pmin(value, limits[2])))
     },
+
+    #' @description Specific validation for the 2025 model.
+    #' @inheritParams RiskModel
     validate = function(pregnancy) {
       assertNumber(pregnancy$get("ga")*7, lower = 56, upper = 99, .var.name = "Gestational age in days")
       assertNumber(pregnancy$get("biophysical_ga")*7, na.ok = TRUE, null.ok = TRUE, lower = 56, upper = 99, .var.name = "Gestational age at biophysical examination in days")
       assertNumber(pregnancy$get("biochemical_ga")*7, na.ok = TRUE, null.ok = TRUE, lower = 56, upper = 99, .var.name = "Gestational age at biochemical examination in days")
+
+      assertNumber(params$map,  na.ok = FALSE, .var.name = "Provided MAP measurements")
     },
+
+    #' @description Inherits CRL conversion from \code{RiskModel}.
+    #' @inheritParams RiskModel
     get_ga_from_crl = function(crl = NA) {
       if ( is.na(crl) ) {
         stop("CRL not provided.")
@@ -64,6 +105,9 @@ RiskModelFMFM2025 <- R6::R6Class(
       ga <- floor(23.73 + 8.052 * sqrt(1.037*crl))/7
       return(ga)
     },
+
+    #' @description Refined MAP calculation for 2025.
+    #' @inheritParams RiskModel
     get_expected_map = function(pregnancy) {
       intercept    <-                      1.936400000
       beta_ga      <-                      0.000428017
@@ -116,6 +160,9 @@ RiskModelFMFM2025 <- R6::R6Class(
 
       return(10^mom)
     },
+
+    #' @description Refined PlGF calculation for 2025.
+    #' @inheritParams RiskModel
     get_expected_plgf = function(pregnancy) {
       intercept           <-  0
       intercept_delfia    <-  1.346177
@@ -203,6 +250,9 @@ RiskModelFMFM2025 <- R6::R6Class(
 
       return(10^mom)
     },
+
+    #' @description Refined UtPI calculation for 2025.
+    #' @inheritParams RiskModel
     get_expected_utpi = function(pregnancy) {
       intercept           <-  0.264570000
       beta_ga             <- -0.004838365
@@ -249,6 +299,9 @@ RiskModelFMFM2025 <- R6::R6Class(
 
       return(10^mom)
     },
+
+    #' @description Refined prior risk calculation for 2025.
+    #' @inheritParams RiskModel
     get_prior_risk = function(pregnancy, g = 37, pnorm = FALSE) {
 
       age    <- pmax(12,  pmin(pregnancy$get("age"), 55))
@@ -313,71 +366,9 @@ RiskModelFMFM2025 <- R6::R6Class(
         return(dnorm(g, mean = mu, sd = sigma))
       }
     },
-    # get_prior_risk = function(pregnancy, g = 37, pnorm = FALSE) {
-    #
-    #   intercept <- 54.3637
-    #   sigma     <-  6.8833
-    #
-    #   beta_age                  <- -0.206886
-    #   beta_height               <-  0.11711
-    #   beta_afro_caribbean       <- -2.6786
-    #   beta_south_asian          <- -1.129
-    #   beta_chronic_hypertension <- -7.2897
-    #   # beta_SLE_APS              <- -3.0519
-    #   beta_in_vitro             <- -1.6327
-    #
-    #   beta_weight               <- -0.0694096
-    #   beta_family_PE            <- -1.7154
-    #   beta_DM                   <- -3.3899
-    #
-    #   mu <- intercept +
-    #
-    #     ifelse(pregnancy$get("age", truncate_for = "prior_risk") >= 35, beta_age * (pregnancy$get("age", truncate_for = "prior_risk")-35), 0) +
-    #     beta_height * (pregnancy$get("height", truncate_for = "prior_risk") - 164) +
-    #     ifelse(pregnancy$get("race") == "afro-caribbean", beta_afro_caribbean, 0) +
-    #     ifelse(pregnancy$get("race") == "south-asian", beta_south_asian, 0) +
-    #     ifelse(pregnancy$get("chronic_hypertension") == "yes", beta_chronic_hypertension, 0) +
-    #     # ifelse(form_data$sle == 1 && form_data$aps == 1 && model == "2024", beta_SLE_APS, 0) +
-    #     ifelse(pregnancy$get("conception") == "ivf", beta_in_vitro, 0)
-    #
-    #   if ( pregnancy$get("previous") == "yes" ) {
-    #     if ( pregnancy$get("previous_pe") == "yes" ) {
-    #       intercept_parity <- -8.1667
-    #       beta_previous_ga <- 0.0271988
-    #
-    #       mu <- mu +
-    #         intercept_parity +
-    #         beta_previous_ga * (pregnancy$get("previous_ga", truncate_for = "prior_risk") - 24)^2
-    #
-    #     } else {
-    #       intercept_parity <- -4.335
-    #       beta_interval    <- -4.15137651
-    #       beta_interval_05 <-  9.21473572
-    #       beta_previous_ga <-  0.01549673
-    #
-    #       mu <- mu +
-    #         intercept_parity +
-    #         beta_interval * (pregnancy$get("previous_interval", truncate_for = "prior_risk")^-1) +
-    #         beta_interval_05 * (pregnancy$get("previous_interval", truncate_for = "prior_risk")^-0.5) +
-    #         beta_previous_ga * (pregnancy$get("previous_ga", truncate_for = "prior_risk") - 24)^2
-    #     }
-    #   }
-    #
-    #   if ( pregnancy$get("chronic_hypertension") == "no" ) {
-    #     mu <- mu +
-    #       beta_weight * (pregnancy$get("weight", truncate_for = "prior_risk") - 69) +
-    #       ifelse(pregnancy$get("mother_pe") == "yes", beta_family_PE, 0) +
-    #       ifelse(pregnancy$get("diabetes_type_i") == "yes" || pregnancy$get("diabetes_type_ii") == "yes", beta_DM, 0)
-    #   }
-    #
-    #   if (pnorm) {
-    #     r <- pnorm(g, mean = mu, sd = sigma)
-    #   } else {
-    #     r <- dnorm(g, mean = mu, sd = sigma)
-    #   }
-    #
-    #   return(r)
-    # },
+
+    #' @description Refined risk calculation for 2025.
+    #' @inheritParams RiskModel
     get_risk = function(pregnancy, G = 37) {
 
       get_mus <- function(mom_MAP, mom_PI, mom_PlGF, x) {
