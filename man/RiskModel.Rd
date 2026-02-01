@@ -5,8 +5,9 @@
 \title{RiskModel Base Class}
 \description{
 An abstract R6 class that serves as the foundation for specific
-preeclampsia risk models. It defines the standard
-interface and shared fields required for risk calculations.
+preeclampsia risk models. It defines the standard interface and shared
+fields required for risk calculations. This class should not be
+instantiated directly; use one of its subclasses instead.
 }
 \section{Methods}{
 
@@ -32,6 +33,16 @@ the final posterior risk of preeclampsia.}
 }
 }
 
+\seealso{
+Implementations:
+\itemize{
+\item \code{\link{RiskModelFMFM2023}}: FMF 2023 model
+\item \code{\link{RiskModelFMFM2025}}: FMF 2025 model
+\item \code{\link{RiskModelEmpty}}: Placeholder model returning NA
+}
+
+Related classes: \code{\link{Pregnancy}}, \code{\link{calculate_risk}}
+}
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}
 \describe{
@@ -39,10 +50,9 @@ the final posterior risk of preeclampsia.}
 (defaults to "RiskModelTemplate").}
 
 \item{\code{G}}{Numeric. The gestational age at which risk is being calculated
-(default is 37).}
+(default is 37 weeks).}
 
-\item{\code{risk_model}}{Placeholder for the specific model implementation
-logic.}
+\item{\code{risk_model}}{Placeholder for the specific model implementation logic.}
 }
 \if{html}{\out{</div>}}
 }

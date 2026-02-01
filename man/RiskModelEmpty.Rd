@@ -7,7 +7,8 @@
 A subclass of \code{\link{RiskModel}} that implements a placeholder or
 "empty" risk calculation. While it provides the required interface,
 it returns \code{NA} for biomarker and risk calculations. This is primarily
-used as a baseline or for testing purposes.
+used as a baseline or for testing purposes when you want to create
+Pregnancy objects without calculating actual risk scores.
 }
 \section{Methods}{
 
@@ -28,8 +29,14 @@ method that performs no truncation.}
 }
 }
 
+\seealso{
+\code{\link{RiskModel}} for the base class,
+\code{\link{RiskModelFMFM2023}} and \code{\link{RiskModelFMFM2025}} for
+functional implementations,
+\code{\link{calculate_risk}} for using the model
+}
 \section{Super class}{
-\code{PERiskProfileR::RiskModel} -> \code{RiskModelEmpty}
+\code{\link[PERiskProfileR:RiskModel]{PERiskProfileR::RiskModel}} -> \code{RiskModelEmpty}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

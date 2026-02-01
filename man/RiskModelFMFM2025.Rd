@@ -5,24 +5,30 @@
 \title{FMF 2025 Risk Model Class}
 \description{
 An R6 class implementing the updated 2025 competitive risk model for
-preeclampsia. This model expands upon the 2023
-version by supporting earlier screening (from 8 weeks) and incorporating
-refined biomarker coefficients.
+preeclampsia. This model expands upon the 2023 version by supporting
+earlier screening (from 8 weeks) and incorporating refined biomarker
+coefficients.
 }
 \details{
 This implementation is based on FMF Models main/0.0.1 and supports
 biochemical and biophysical screening between 56 and 99 days of
-gestation.
+gestation (8+0 to 14+1 weeks).
 
-Key differences from the 2023 model include:
+\strong{Key differences from the 2023 model:}
 \itemize{
-\item \strong{Earlier Screening:} Valid GA range is 56–99 days.
+\item \strong{Earlier Screening:} Valid GA range is 56-99 days (vs 77-99 days).
 \item \strong{Refined PlGF Logic:} Includes a cubic term for GA and
 incorporates maternal height into the expected PlGF calculation.
 \item \strong{Early PlGF Handling:} If PlGF is measured before 12 weeks
 and exceeds a specific threshold, it is treated as \code{NA} to
 prevent over-estimation of risk.
+\item \strong{MAP Required:} This model requires MAP measurements (unlike 2023).
+\item \strong{Separate Truncations:} Uses separate truncation limits for
+each biomarker (mom_map, mom_utpi, mom_plgf).
 }
+
+\strong{Note:} Only raw PlGF values are accepted for this model. Pre-calculated
+MoM values for PlGF will be ignored with a warning.
 }
 \section{Methods}{
 
@@ -48,8 +54,24 @@ the final posterior risk of preeclampsia.}
 }
 }
 
+\examples{
+\dontrun{
+# Create a 2025 model for risk before 37 weeks
+model <- RiskModelFMFM2025$new(G = 37)
+
+# Use with calculate_risk for early screening
+results <- calculate_risk(df, model = "FMF2025", G = 37)
+}
+
+}
+\seealso{
+\code{\link{RiskModel}} for the base class,
+\code{\link{RiskModelFMFM2023}} for the 2023 model,
+\code{\link{Pregnancy}} for the Pregnancy class,
+\code{\link{calculate_risk}} for batch processing
+}
 \section{Super class}{
-\code{PERiskProfileR::RiskModel} -> \code{RiskModelFMFM2025}
+\code{\link[PERiskProfileR:RiskModel]{PERiskProfileR::RiskModel}} -> \code{RiskModelFMFM2025}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

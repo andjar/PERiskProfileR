@@ -17,5 +17,13 @@ Converts a character string in the format "1 in X" into a numeric
 probability (1/X).
 }
 \examples{
-text_to_risk("1 in 100") # Returns 0.01
+text_to_risk("1 in 100")
+# Returns 0.01
+
+text_to_risk("1 in 50")
+# Returns 0.02
+
+}
+\seealso{
+\code{\link{risk_to_text}} for the inverse operation
 }

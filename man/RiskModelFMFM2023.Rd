@@ -16,6 +16,15 @@ The model is based on the algorithm described in:
 It calculates risk by combining a prior distribution (based on maternal
 characteristics) with the likelihood of biomarker Multiples of the
 Median (MoMs).
+
+\strong{Valid Gestational Age Range:} 77-99 days (11+0 to 14+1 weeks)
+
+\strong{Supported Biomarkers:}
+\itemize{
+\item MAP (Mean Arterial Pressure)
+\item UtPI (Uterine Artery Pulsatility Index)
+\item PlGF (Placental Growth Factor) - Delfia, Kryptor, or Roche analyzers
+}
 }
 \section{Methods}{
 
@@ -60,8 +69,33 @@ distributions.
 }
 }
 
+\examples{
+\dontrun{
+# Create a 2023 model for risk before 37 weeks
+model_37 <- RiskModelFMFM2023$new(G = 37)
+
+# Create a model for early preeclampsia (before 34 weeks)
+model_34 <- RiskModelFMFM2023$new(G = 34)
+
+# Use with calculate_risk
+results <- calculate_risk(df, model = "FMF2023", G = 37)
+}
+
+}
+\references{
+Tan MY, Syngelaki A, Poon LC, et al. Screening for pre-eclampsia by
+maternal factors and biomarkers at 11-13 weeks' gestation.
+\emph{Ultrasound Obstet Gynecol}. 2018;52(2):186-195.
+\doi{10.1002/uog.19112}
+}
+\seealso{
+\code{\link{RiskModel}} for the base class,
+\code{\link{RiskModelFMFM2025}} for the updated 2025 model,
+\code{\link{Pregnancy}} for the Pregnancy class,
+\code{\link{calculate_risk}} for batch processing
+}
 \section{Super class}{
-\code{PERiskProfileR::RiskModel} -> \code{RiskModelFMFM2023}
+\code{\link[PERiskProfileR:RiskModel]{PERiskProfileR::RiskModel}} -> \code{RiskModelFMFM2023}
 }
 \section{Public fields}{
 \if{html}{\out{<div class="r6-fields">}}

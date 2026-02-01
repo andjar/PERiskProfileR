@@ -4,9 +4,10 @@
 #' A subclass of \code{\link{RiskModel}} that implements a placeholder or
 #' "empty" risk calculation. While it provides the required interface,
 #' it returns \code{NA} for biomarker and risk calculations. This is primarily
-#' used as a baseline or for testing purposes.
+#' used as a baseline or for testing purposes when you want to create
+#' Pregnancy objects without calculating actual risk scores.
 #'
-#' @super RiskModel
+#' @inherit RiskModel
 #'
 #' @field model_name Character. Always set to "RiskModelEmpty".
 #' @field G Numeric. The gestational age at which risk is calculated.
@@ -28,6 +29,11 @@
 #'   \item{\code{get_prior_risk(pregnancy, g = 37, pnorm = FALSE)}}{Returns \code{NA_real_}.}
 #'   \item{\code{get_risk(pregnancy, G = 37)}}{Returns \code{NA_real_}.}
 #' }
+#'
+#' @seealso \code{\link{RiskModel}} for the base class,
+#'   \code{\link{RiskModelFMFM2023}} and \code{\link{RiskModelFMFM2025}} for
+#'   functional implementations,
+#'   \code{\link{calculate_risk}} for using the model
 #'
 #' @export
 RiskModelEmpty <- R6::R6Class(

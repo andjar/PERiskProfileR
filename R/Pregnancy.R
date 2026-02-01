@@ -28,6 +28,50 @@
 #'   }
 #' }
 #'
+#' @examples
+#' \dontrun{
+#' # Create a pregnancy object manually
+#' preg <- Pregnancy$new(
+#'   params = list(
+#'     twins = "singleton",
+#'     crl = 65,
+#'     ga_at = "2024-01-15",
+#'     date_of_birth = "1990-05-20",
+#'     height = 165,
+#'     weight = 70,
+#'     race = "white",
+#'     smoking = "no",
+#'     mother_pe = "no",
+#'     chronic_hypertension = "no",
+#'     conception = "spontaneous",
+#'     diabetes_type_i = "no",
+#'     diabetes_type_ii = "no",
+#'     sle = "no",
+#'     aps = "no",
+#'     previous = "no",
+#'     map = 85,
+#'     mom_map = NA,
+#'     utpi = 1.5,
+#'     mom_utpi = NA,
+#'     plgf = NA,
+#'     mom_plgf = NA,
+#'     biophysical_at = "2024-01-15"
+#'   ),
+#'   risk_model = RiskModelFMFM2023$new()
+#' )
+#'
+#' # Access calculated risk
+#' preg$get("risk")
+#' preg$get("risk_text")
+#'
+#' # Export as data.table
+#' preg$as_df()
+#' }
+#'
+#' @seealso \code{\link{calculate_risk}} for batch processing,
+#'   \code{\link{RiskModel}} for risk model details,
+#'   \code{\link{RiskModelFMFM2023}}, \code{\link{RiskModelFMFM2025}}
+#'
 #' @export
 Pregnancy <- R6::R6Class(
   classname = "Pregnancy",

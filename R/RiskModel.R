@@ -2,15 +2,15 @@
 #'
 #' @description
 #' An abstract R6 class that serves as the foundation for specific
-#' preeclampsia risk models. It defines the standard
-#' interface and shared fields required for risk calculations.
+#' preeclampsia risk models. It defines the standard interface and shared
+#' fields required for risk calculations. This class should not be
+#' instantiated directly; use one of its subclasses instead.
 #'
 #' @field model_name Character. The name of the specific risk model
 #'   (defaults to "RiskModelTemplate").
 #' @field G Numeric. The gestational age at which risk is being calculated
-#'   (default is 37).
-#' @field risk_model Placeholder for the specific model implementation
-#'   logic.
+#'   (default is 37 weeks).
+#' @field risk_model Placeholder for the specific model implementation logic.
 #'
 #' @section Methods:
 #' \describe{
@@ -33,6 +33,16 @@
 #'   \item{\code{get_risk(pregnancy, G = 37)}}{Abstract method to calculate
 #'     the final posterior risk of preeclampsia.}
 #' }
+#'
+#' @seealso
+#' Implementations:
+#' \itemize{
+#'   \item \code{\link{RiskModelFMFM2023}}: FMF 2023 model
+#'   \item \code{\link{RiskModelFMFM2025}}: FMF 2025 model
+#'   \item \code{\link{RiskModelEmpty}}: Placeholder model returning NA
+#' }
+#'
+#' Related classes: \code{\link{Pregnancy}}, \code{\link{calculate_risk}}
 #'
 #' @export
 RiskModel <- R6::R6Class(

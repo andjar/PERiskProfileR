@@ -1,19 +1,32 @@
 #' Retrieve Demo Dataset
 #'
-#' This function provides access to a demo dataset included in the package.
-#' The dataset is stored as a CSV file in the `extdata` directory of the package.
+#' @description
+#' Provides access to a demonstration dataset included in the package for
+#' testing and example purposes. The dataset contains sample pregnancy data
+#' with all required fields for risk calculation.
 #'
-#' @return A `data.table` object containing the contents of the demo dataset.
+#' @return A \code{data.table} object containing the demo dataset with columns
+#'   matching the expected input format for \code{\link{calculate_risk}}.
+#'
+#' @details
+#' The dataset is stored as a CSV file in the \code{extdata} directory of the
+#' package and includes synthetic patient data suitable for demonstrating
+#' the package functionality.
 #'
 #' @examples
 #' \dontrun{
 #' # Load the demo dataset
 #' demo_data <- get_demo_data()
 #' head(demo_data)
+#'
+#' # Calculate risk for all patients
+#' results <- calculate_risk(demo_data, model = "FMF2023", as_list = FALSE)
 #' }
 #'
+#' @seealso \code{\link{get_validation_data}} for validation datasets,
+#'   \code{\link{calculate_risk}} for using the data
+#'
 #' @importFrom data.table fread
-#' @keywords prepare
 #' @export
 get_demo_data <- function() {
   return(fread(system.file("extdata", "data_validation.csv", package = "PERiskProfileR")))
@@ -21,15 +34,42 @@ get_demo_data <- function() {
 
 #' Retrieve Validation Dataset
 #'
-#' This function provides access to a validation dataset included in the package.
-#' The dataset is stored as a CSV file in the `extdata` directory of the package.
+#' @description
+#' Provides access to validation datasets used for verifying the accuracy of
+#' risk calculations against the official FMF online calculator. The datasets
+#' include both analytical (package-calculated) and online (FMF website)
+#' results for comparison.
 #'
-#' @param modle What dataset to retrieve: `FMF2023` or `FMF2025`
+#' @param model A character string specifying which model's validation data
+#'   to retrieve. Must be one of \code{"FMF2023"} or \code{"FMF2025"}.
+#'   Defaults to \code{"FMF2023"}.
 #'
-#' @return A `data.table` object containing the contents of the validation dataset.
+#' @return A \code{data.table} object containing merged validation data with
+#'   columns for:
+#'   \itemize{
+#'     \item Original patient data (demographic and clinical parameters)
+#'     \item Analytical results (calculated by this package): \code{*_analytical}
+#'     \item Online results (from FMF calculator): \code{*_online}
+#'   }
 #'
-#' @importFrom data.table fread
-#' @keywords prepare
+#' @details
+#' The validation datasets allow users to compare this package's output
+#' against the official FMF online calculator. Small differences may exist
+#' due to rounding or implementation details.
+#'
+#' @examples
+#' \dontrun{
+#' # Get FMF2023 validation data
+#' val_2023 <- get_validation_data("FMF2023")
+#'
+#' # Compare analytical vs online risk calculations
+#' val_2023[, .(id, risk_analytical, risk_online)]
+#' }
+#'
+#' @seealso \code{\link{get_demo_data}} for demonstration data,
+#'   \code{\link{calculate_risk}} for calculating risks
+#'
+#' @importFrom data.table fread setnames
 #' @export
 get_validation_data <- function(model = "FMF2023") {
 
