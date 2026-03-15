@@ -55,7 +55,7 @@ text_to_risk <- function(txt) {
 #'
 #' @export
 risk_to_text <- function(risk, max_risk = 1/10000) {
-  if ( is.infinite(risk) || risk > max_risk ) risk <- max_risk
+  if ( is.infinite(risk) || risk < max_risk ) risk <- max_risk
   txt <- paste0("1 in ", round(1/round(risk, 4)))
   return(txt)
 }
