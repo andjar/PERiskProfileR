@@ -56,6 +56,8 @@
 #'   \code{\link{RiskModelFMFM2023}} and \code{\link{RiskModelFMFM2025}} for model details,
 #'   \code{\link{get_demo_data}} for example data
 #'
+#' @import data.table R6 checkmate
+#'
 #' @export
 calculate_risk <- function (df, model = "FMF2023", as_list = TRUE, G = 37) {
 
